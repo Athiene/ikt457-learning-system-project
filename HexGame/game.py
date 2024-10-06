@@ -210,7 +210,7 @@ class Game:
         index = random.choice(none_cells)
         return index
 
-    def returnTurns(self, goBack):
+    def returnTurns(self, goBack, option):
         if goBack == 0:
             return
 
@@ -229,33 +229,33 @@ class Game:
             # Clear the edge list for the lastIndex
             self.CellNodesEdgeList[lastIndex] = []
 
+            if option:
+                print("##### After Removal ######")
+                self.print_hex_diagram()
+                print()
+                print("Features: ")
+                print(self.CellNodesFeatureList)
+                print()
+                print("Connections: ")
+                print(self.CellNodesEdgeList)
+                print()
         return
 
     def SimulateGame(self, goBack):
         condition = True
         while condition:
-            hasWinner = self.makeMove(True, self.RandomAvailableCell())
+            hasWinner = self.makeMove(False, self.RandomAvailableCell())
             if hasWinner:
                 condition = False
         game.print_overview()
-        self.returnTurns(goBack)
+        self.returnTurns(goBack, True)
         return self.CellNodesFeatureList, self.CellNodesEdgeList
 
 
-for i in range(1):
+for i in range(100):
     print(f"###### GAME {i + 1} #######")
     game = Game(6)
     newGame = game.SimulateGame(1)
-    featureList, connectinList = newGame
-    print("##### After Removal ######")
-    game.print_hex_diagram()
-    print()
-    print("Features: ")
-    print(featureList)
-    print()
-    print("Connections: ")
-    print(connectinList)
-    print()
+    featureList, connectionList = newGame
 
-# game.print_overview()
 
