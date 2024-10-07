@@ -6,6 +6,7 @@ class Game:
     def __init__(self, size):
         self.board_size = size
         self.Player1 = True
+        self.Winner = None
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -173,9 +174,9 @@ class Game:
         winner = self.winnerCheck()
         if winner == "Red" or winner == "Blue":
             print(f"{winner} has won the game!")
-            return True
+            return winner
 
-        return False
+        return None
 
     def print_hex_diagram(self):
         print()
@@ -244,18 +245,18 @@ class Game:
     def SimulateGame(self, goBack):
         condition = True
         while condition:
-            hasWinner = self.makeMove(False, self.RandomAvailableCell())
-            if hasWinner:
+            self.Winner = self.makeMove(False, self.RandomAvailableCell())
+            if self.Winner is not None:
                 condition = False
         game.print_overview()
         self.returnTurns(goBack, True)
-        return self.CellNodesFeatureList, self.CellNodesEdgeList
+        return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
 
 
 for i in range(100):
     print(f"###### GAME {i + 1} #######")
     game = Game(6)
     newGame = game.SimulateGame(1)
-    featureList, connectionList = newGame
+    winner, featureList, connectionList = newGame
 
 
