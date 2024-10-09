@@ -68,6 +68,13 @@ for graph_id in range(args.number_of_examples):
                 graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
 
     for node_id in range(len(Simulation[graph_id][2])):
-        graphs_train.add_graph_node_feature(graph_id, node_id, Simulation[graph_id][1][node_id])
+        if Simulation[graph_id][1][node_id] == 'Red':
+            graphs_train.add_graph_node_feature(graph_id, node_id, 'R')
+            continue
+        if Simulation[graph_id][1][node_id] == 'Blue':
+            graphs_train.add_graph_node_feature(graph_id, node_id, 'B')
+            continue
+        if Simulation[graph_id][1][node_id] == [None]:
+            graphs_train.add_graph_node_feature(graph_id, node_id, 'N')
 
 graphs_train.encode()
