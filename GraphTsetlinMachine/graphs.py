@@ -21,30 +21,48 @@
 import numpy as np
 import hashlib
 from numba import jit
+from sympy import prevprime
+import sys
 
 class Graphs():
-	def __init__(self, number_of_graphs, hypervector_size = 128, hypervector_bits = 2, symbol_names=None, init_with=None):
+	def __init__(self, number_of_graphs, hypervector_size = 128, hypervector_bits = 2, double_hashing=False, symbol_names=None, init_with=None):
 		self.number_of_graphs = number_of_graphs
 		self.number_of_graph_nodes = np.zeros(self.number_of_graphs, dtype=np.uint32)
-		
+		self.double_hashing = double_hashing
+
 		self.graph_node_id = [None] * self.number_of_graphs
 		for i in range(number_of_graphs):
 			self.graph_node_id[i] = {}
 
 		self.init_with = init_with
 		if self.init_with == None:
+			self.edge_type_id = {}
+
 			self.symbol_id = {}
 			for symbol_name in symbol_names:
 				self.symbol_id[symbol_name] = len(self.symbol_id)
 			self.hypervector_size = hypervector_size
 			self.hypervector_bits = hypervector_bits
-			self.number_of_hypervector_chunks = (self.hypervector_size*2 - 1) // 32 + 1
 
-			indexes = np.arange(self.hypervector_size, dtype=np.uint32)
-			self.hypervectors = np.zeros((len(self.symbol_id), self.hypervector_bits), dtype=np.uint32)
-			for i in range(len(self.symbol_id)):
-				self.hypervectors[i,:] = np.random.choice(indexes, size=(self.hypervector_bits), replace=False)
+			if self.double_hashing:
+				self.hypervector_bits = 2
+				self.hypervectors = np.zeros((len(self.symbol_id), self.hypervector_bits), dtype=np.uint32)
+				prime = prevprime(self.hypervector_size)
+				for i in range(len(self.symbol_id)):
+					self.hypervectors[i, 0] = i % (self.hypervector_size)
+					self.hypervectors[i, 1] = (self.hypervector_size) + prime - (i % prime)
+					#self.hypervectors[indexes[i], 0] = indexes[i] % (self.hypervector_size // 3)
+					#self.hypervectors[indexes[i], 1] = (self.hypervector_size // 3) + prime - (indexes[i] % prime)
+					#self.hypervectors[indexes[i], 2] = 2 * (self.hypervector_size // 3) + (indexes[i] // 27) % (self.hypervector_size // 3)
+			else:
+				self.hypervectors = np.zeros((len(self.symbol_id), self.hypervector_bits), dtype=np.uint32)
+				indexes = np.arange(self.hypervector_size)
+				for i in range(len(self.symbol_id)):
+					self.hypervectors[i,:] = np.random.choice(indexes, size=(self.hypervector_bits), replace=False)
+
+			self.number_of_hypervector_chunks = (self.hypervector_size*2 - 1) // 32 + 1
 		else:
+			self.edge_type_id = self.init_with.edge_type_id
 			self.symbol_id = self.init_with.symbol_id
 			self.hypervector_size = self.init_with.hypervector_size
 			self.hypervector_bits = self.init_with.hypervector_bits
@@ -82,16 +100,25 @@ class Graphs():
 			self.graph_node_id[graph_id][node_name] = len(self.graph_node_id[graph_id])
 		self.number_of_graph_node_edges[self.node_index[graph_id] + self.graph_node_id[graph_id][node_name]] = number_of_graph_node_edges
 
-	def prepare_edge_configuration(self):		
+	def prepare_edge_configuration(self):
 		self.edge_index[1:] = np.add.accumulate(self.number_of_graph_node_edges[:-1])
 		self.edge = np.empty((self.number_of_graph_node_edges.sum(), 2), dtype=np.uint32)
 
-	def add_graph_node_edge(self, graph_id, source_node_name, destination_node_name, edge_type):
+	def add_graph_node_edge(self, graph_id, source_node_name, destination_node_name, edge_type_name):
 		source_node_id = self.graph_node_id[graph_id][source_node_name]
+
+		if self.graph_node_edge_counter[self.node_index[graph_id] + source_node_id] >= self.number_of_graph_node_edges[self.node_index[graph_id] + source_node_id]:
+			print("Too many edges added to node '%s' of graph %d." % (source_node_name, graph_id))
+			sys.exit(-1)
+
 		destination_node_id = self.graph_node_id[graph_id][destination_node_name]
+		if edge_type_name not in self.edge_type_id:
+			self.edge_type_id[edge_type_name] = len(self.edge_type_id)
+		edge_type_id = self.edge_type_id[edge_type_name]
+
 		edge_index = self.edge_index[self.node_index[graph_id] + source_node_id] + self.graph_node_edge_counter[self.node_index[graph_id] + source_node_id]
 		self.edge[edge_index][0] = destination_node_id
-		self.edge[edge_index][1] = edge_type
+		self.edge[edge_index][1] = edge_type_id
 		self.graph_node_edge_counter[self.node_index[graph_id] + source_node_id] += 1
 
 	@staticmethod
@@ -110,7 +137,34 @@ class Graphs():
 	def add_graph_node_feature(self, graph_id, node_name, symbol):
 		self._add_graph_node_feature(self.hypervectors, self.hypervector_size, self.node_index[graph_id], self.graph_node_id[graph_id][node_name], self.symbol_id[symbol], self.X)
 
+	def print_graph(self, graph_id):
+		for node_id in range(self.number_of_graph_nodes[graph_id]):
+			for (symbol_name, symbol_id) in self.symbol_id.items():
+				match = True
+				for k in self.hypervectors[symbol_id,:]:
+					chunk = k // 32
+					pos = k % 32
+
+					if (self.X[self.node_index[graph_id] + node_id][chunk] & (1 << pos)) == 0:
+						match = False
+
+				if match:
+					print(symbol_name, end=' ')
+				else:
+					print("*", end=' ')
+		print()
+
 	def encode(self):
+		edges_missing = False
+		for graph_id in range(self.number_of_graphs):
+			for (node_name, node_id) in self.graph_node_id[graph_id].items():
+				if self.graph_node_edge_counter[self.node_index[graph_id] + node_id] < self.number_of_graph_node_edges[self.node_index[graph_id] + node_id]:
+					edges_missing = True
+					print("Node '%s' of graph %d misses edges." % (node_name, graph_id))
+
+		if edges_missing:
+			sys.exit(-1)
+
 		m = hashlib.sha256()
 		m.update(self.X.data)
 		m.update(self.edge.data)
