@@ -1,8 +1,5 @@
 from GraphTsetlinMachine.graphs import Graphs
-import numpy as np
-import HexGame.game
 import argparse
-
 from HexGame import game
 
 
@@ -36,7 +33,6 @@ Simulation = [[[],[],[]] for _ in range(args.number_of_examples)]
 
 graphs_train = Graphs(args.number_of_examples, symbol_names=['R', 'B'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
 for graph_id in range(args.number_of_examples):
-
     # Fetches simulated game of hex
     newGame_ = game.Game(6)
     winner, featureList, edgeList = newGame_.SimulateGame(1)
@@ -44,12 +40,11 @@ for graph_id in range(args.number_of_examples):
     Simulation[graph_id][1] = featureList
     Simulation[graph_id][2] = edgeList
 
-    # Sets the correct amount of nodes for each graph in the tsetlin machine node config
-    graphs_train.set_number_of_graph_nodes(graph_id, featureList.count())
+    graphs_train.set_number_of_graph_nodes(graph_id, len(featureList))
 
     # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(edgeList):
-        graphs_train.add_graph_node(graph_id, node_id, edgeList[node_id].count())
+    for node_id in range(len(edgeList)):
+        graphs_train.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
 
 # Initiates the configuration
 graphs_train.prepare_node_configuration()
@@ -57,15 +52,14 @@ graphs_train.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
 for graph_id in range(args.number_of_examples):
-    # Sets the edges for each node in a graph
     for node_id in range(graphs_train.number_of_nodes()):
-        if not Simulation[graph_id][node_id]:
-            for edge in Simulation[graph_id][node_id]:
+        if Simulation[graph_id][2][node_id]:
+            for edge in Simulation[graph_id][2][node_id]:
                 graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
         else:
-            graphs_train.add_graph_node_edge(graph_id, node_id, None,0)
+            graphs_train.add_graph_node_edge(graph_id, node_id, None, 0)
 
     for node_id in range(graphs_train.number_of_nodes()):
-        graphs_train.add_graph_node_feature(graph_id, node_id, Simulation[graph_id][1])
+        graphs_train.add_graph_node_feature(graph_id, node_id, Simulation[graph_id][1][node_id])
 
 graphs_train.encode()
