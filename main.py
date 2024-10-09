@@ -31,7 +31,7 @@ args = default_args()
 # Lists that contain all the simulated hex games
 Simulation = [[[],[],[]] for _ in range(args.number_of_examples)]
 
-graphs_train = Graphs(args.number_of_examples, symbol_names=['R', 'B'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
+graphs_train = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
     newGame_ = game.Game(6)
