@@ -51,6 +51,15 @@ for graph_id in range(args.number_of_examples):
 
 graphs_train.prepare_edge_configuration()
 
+print(Simulation[0][0][0])
+print("###########")
+for i in range(len(Simulation[0][1])):
+    print(Simulation[0][1][i])
+print("###########")
+for i in range(len(Simulation[0][2])):
+    print(Simulation[0][2][i])
+
+
 # Adds actual values i.e: features and edges
 for graph_id in range(args.number_of_examples):
     for node_id in range(len(Simulation[graph_id][2])):
