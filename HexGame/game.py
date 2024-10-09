@@ -193,13 +193,13 @@ class Game:
     def print_overview(self):
         print()
         print("Features for cells")
-        print(game.CellNodesFeatureList)
+        print(self.CellNodesFeatureList)
         print()
         print("Connectons for cells")
-        print(game.CellNodesEdgeList)
+        print(self.CellNodesEdgeList)
         print()
         print("Moves done")
-        print(game.MoveList)
+        print(self.MoveList)
         print()
         self.print_hex_diagram()
 
@@ -248,15 +248,9 @@ class Game:
             self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        game.print_overview()
+        self.print_overview()
         self.returnTurns(goBack, True)
         return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
 
-
-for i in range(100):
-    print(f"###### GAME {i + 1} #######")
-    game = Game(6)
-    newGame = game.SimulateGame(1)
-    winner, featureList, connectionList = newGame
 
 
