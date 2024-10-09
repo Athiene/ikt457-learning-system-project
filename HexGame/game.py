@@ -173,7 +173,7 @@ class Game:
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "Red" or winner == "Blue":
-            print(f"{winner} has won the game!")
+            #print(f"{winner} has won the game!")
             return winner
 
         return None
