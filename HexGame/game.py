@@ -248,8 +248,8 @@ class Game:
             self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        self.print_overview()
-        self.returnTurns(goBack, True)
+        #self.print_overview()
+        self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
 
 
