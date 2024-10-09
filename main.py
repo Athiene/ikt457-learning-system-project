@@ -39,15 +39,16 @@ for graph_id in range(args.number_of_examples):
     Simulation[graph_id][0] = winner
     Simulation[graph_id][1] = featureList
     Simulation[graph_id][2] = edgeList
-
+    # Sets the correct amount of nodes in a graph
     graphs_train.set_number_of_graph_nodes(graph_id, len(featureList))
 
-    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(len(edgeList)):
-        graphs_train.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
-
-# Initiates the configuration
 graphs_train.prepare_node_configuration()
+
+for graph_id in range(args.number_of_examples):
+    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
+    for node_id in range(len(Simulation[graph_id][2])):
+        graphs_train.add_graph_node(graph_id, node_id, len(Simulation[graph_id][2][node_id]))
+
 graphs_train.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
