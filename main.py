@@ -66,8 +66,6 @@ for graph_id in range(args.number_of_examples):
         if Simulation[graph_id][2][node_id]:
             for edge in Simulation[graph_id][2][node_id]:
                 graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
-        else:
-            graphs_train.add_graph_node_edge(graph_id, node_id, node_id, 0)
 
     for node_id in range(len(Simulation[graph_id][2])):
         graphs_train.add_graph_node_feature(graph_id, node_id, Simulation[graph_id][1][node_id])
