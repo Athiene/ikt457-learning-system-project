@@ -35,6 +35,7 @@ def fetch_labels(labels):
             int_labels.append(0)
         if labels[index][0] == 'Blue':
             int_labels.append(1)
+    print(int_labels)
     return int_labels
 
 args = default_args()
