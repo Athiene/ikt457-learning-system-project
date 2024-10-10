@@ -29,13 +29,14 @@ def default_args(**kwargs):
             setattr(args, key, value)
     return args
 
+
 def fetch_labels(labels):
-    int_labels = np.array([])
+    int_labels = np.array([])  # Start with an empty array
     for index in range(len(labels)):
         if labels[index][0] == 'Red':
-            int_labels.append(0)
-        if labels[index][0] == 'Blue':
-            int_labels.append(1)
+            int_labels = np.append(int_labels, 0)
+        elif labels[index][0] == 'Blue':
+            int_labels = np.append(int_labels, 1)
     print(int_labels)
     return int_labels
 
