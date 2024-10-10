@@ -137,7 +137,7 @@ for i in range(args.epochs):
     result_test = 100*(tm.predict(graphs_test) == fetch_labels(Simulation_Test)).mean()
     stop_testing = time()
 
-    result_train = 100*(tm.predict(graphs_train) == fetch_labels(Simulation_Test)).mean()
+    result_train = 100*(tm.predict(graphs_train) == fetch_labels(Simulation_Train)).mean()
 
     print("%d %.2f %.2f %.2f %.2f" % (i, result_train, result_test, stop_training-start_training, stop_testing-start_testing))
 
