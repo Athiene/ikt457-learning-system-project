@@ -10,7 +10,7 @@ import numpy as np
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=25, type=int)
-    parser.add_argument("--number-of-clauses", default=100, type=int)
+    parser.add_argument("--number-of-clauses", default=20, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.0, type=float)
     parser.add_argument("--depth", default=1, type=int)
@@ -19,7 +19,7 @@ def default_args(**kwargs):
     parser.add_argument("--message-size", default=256, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--noise", default=0.2, type=float)
-    parser.add_argument("--number-of-examples", default=100000, type=int)
+    parser.add_argument("--number-of-examples", default=10000, type=int)
     parser.add_argument("--max-sequence-length", default=1000, type=int)
     parser.add_argument("--number-of-classes", default=2, type=int)
     parser.add_argument("--max-included-literals", default=2, type=int)
@@ -42,6 +42,7 @@ def fetch_labels(labels):
     return int_labels
 
 args = default_args()
+gameboard_size = 3
 
 # Lists that contain all the simulated hex games
 Simulation_Train = [[[],[],[]] for _ in range(args.number_of_examples)]
@@ -51,7 +52,7 @@ print("Creating training data")
 graphs_train = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
-    newGame_ = game.Game(6)
+    newGame_ = game.Game(gameboard_size)
     winner, featureList, edgeList = newGame_.SimulateGame(1)
     Simulation_Train[graph_id][0] = winner
     Simulation_Train[graph_id][1] = featureList
@@ -94,7 +95,7 @@ Simulation_Test = [[[],[],[]] for _ in range(args.number_of_examples)]
 graphs_test = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
-    newGame_ = game.Game(6)
+    newGame_ = game.Game(gameboard_size)
     winner, featureList, edgeList = newGame_.SimulateGame(1)
     Simulation_Test[graph_id][0] = winner
     Simulation_Test[graph_id][1] = featureList
