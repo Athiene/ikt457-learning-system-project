@@ -1,4 +1,5 @@
 from GraphTsetlinMachine.graphs import Graphs
+from scipy.sparse import csr_matrix
 import argparse
 from HexGame import game
 from time import time
@@ -9,7 +10,7 @@ import numpy as np
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=25, type=int)
-    parser.add_argument("--number-of-clauses", default=20, type=int)
+    parser.add_argument("--number-of-clauses", default=100, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.0, type=float)
     parser.add_argument("--depth", default=1, type=int)
@@ -18,7 +19,7 @@ def default_args(**kwargs):
     parser.add_argument("--message-size", default=256, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--noise", default=0.2, type=float)
-    parser.add_argument("--number-of-examples", default=10000, type=int)
+    parser.add_argument("--number-of-examples", default=100000, type=int)
     parser.add_argument("--max-sequence-length", default=1000, type=int)
     parser.add_argument("--number-of-classes", default=2, type=int)
     parser.add_argument("--max-included-literals", default=2, type=int)
