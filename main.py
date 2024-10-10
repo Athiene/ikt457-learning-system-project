@@ -3,6 +3,7 @@ import argparse
 from HexGame import game
 from time import time
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
+import numpy as np
 
 
 def default_args(**kwargs):
@@ -29,7 +30,7 @@ def default_args(**kwargs):
     return args
 
 def fetch_labels(labels):
-    int_labels = []
+    int_labels = np.array([])
     for index in range(len(labels)):
         if labels[index][0] == 'Red':
             int_labels.append(0)
