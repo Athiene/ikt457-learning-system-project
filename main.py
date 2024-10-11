@@ -19,7 +19,7 @@ def default_args(**kwargs):
     parser.add_argument("--message-size", default=256, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--noise", default=0.2, type=float)
-    parser.add_argument("--number-of-examples", default=10000, type=int)
+    parser.add_argument("--number-of-examples", default=10, type=int)
     parser.add_argument("--max-sequence-length", default=1000, type=int)
     parser.add_argument("--number-of-classes", default=2, type=int)
     parser.add_argument("--max-included-literals", default=2, type=int)
@@ -94,9 +94,35 @@ Simulation_Test = [[[],[],[]] for _ in range(args.number_of_examples)]
 
 graphs_test = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hypervector_size=args.hypervector_size, hypervector_bits=args.hypervector_bits)
 for graph_id in range(args.number_of_examples):
+    print(f"\n\n\nGame {graph_id + 1}:")
     # Fetches simulated game of hex
     newGame_ = game.Game(gameboard_size)
     winner, featureList, edgeList = newGame_.SimulateGame(1)
+
+    print(f"Winner: {winner}")
+    print("Board state:")
+    print("Red == X   |  Blue == O |  Empty == .")
+    print()
+
+    # Top border for Blue
+    print("  B" + "B" * (gameboard_size * 2))
+
+    for i in range(gameboard_size):
+        print(f"R ", end="")  # Left border for Red
+        print(" " * i, end="")  # Add leading spaces for hex shape
+        for j in range(gameboard_size):
+            cell = featureList[i * gameboard_size + j]
+            if cell == 'Red':
+                print("X ", end="")
+            elif cell == 'Blue':
+                print("O ", end="")
+            else:
+                print(". ", end="")
+        print(" " * (gameboard_size - i - 1) + "R")  # Right border Red
+
+    # Bottom border for blue
+    print("  B" + "B" * (gameboard_size * 2))
+
     Simulation_Test[graph_id][0] = winner
     Simulation_Test[graph_id][1] = featureList
     Simulation_Test[graph_id][2] = edgeList
