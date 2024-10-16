@@ -199,14 +199,13 @@ class Game:
 
         # Checks if the current cell is not within the first two rows
         if index >= 2 * board_size:
-            above_index = (index - 2* self.board_size+1)
-            if self.CellNodesFeatureList[above_index] == [None]:
-                self.PossibleBridgesList.append(above_index)
+            # bridge pattern top index
+            bp_top_index = (index - 2* self.board_size+1)
+            top_r_index = (index - self.board_size+1)
+            top_l_index = (index - self.board_size)
+            if self.CellNodesFeatureList[bp_top_index] == [None] and self.CellNodesFeatureList[top_r_index] == [None] and self.CellNodesFeatureList[top_l_index] == [None] and index % self.board_size != (self.board_size - 1):
+                self.PossibleBridgesList.append(bp_top_index)
 
-        if index < board_size:
-            above_right_index = (index - self.board_size + 2)
-            if self.CellNodesFeatureList[above_right_index] == [None]:
-                return True
 
 
 
