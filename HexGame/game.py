@@ -196,13 +196,22 @@ class Game:
         playerColor = self.CellNodesFeatureList[index]
         board_size = self.board_size
 
-        # Initialize a list to store the checked empty cells for potential bridges
 
         # Checks if the current cell is not within the first two rows
         if index >= 2 * board_size:
-            above_index = self.CellNodesFeatureList[index - self.board_size]
-            if above_index is None:
-                self.PossibleBridgesList.append(above_index)  # Append the index of the cell above
+            above_index = (index - 2* self.board_size+1)
+            if self.CellNodesFeatureList[above_index] == [None]:
+                self.PossibleBridgesList.append(above_index)
+
+        if index < board_size:
+            above_right_index = (index - self.board_size + 2)
+            if self.CellNodesFeatureList[above_right_index] == [None]:
+                return True
+
+
+
+
+
 
     def print_hex_diagram(self):
         print()
