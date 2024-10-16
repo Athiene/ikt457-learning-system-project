@@ -1,5 +1,8 @@
 import random
 
+from numba.core.typing.builtins import Print
+
+
 class Game:
 
     # On initilize
@@ -19,9 +22,14 @@ class Game:
 
         # Array that contains a moves done
         self.MoveList = []
+
+        # Array that contains the possible bridges
+        self.PossibleBridgesList = []
+
         return
 
     # BROKEN
+
     def NOTdfs(self, index, playerColor, visited, target_side_condition):
 
         # Perform DFS to check for continuous connections to the target side
@@ -122,7 +130,7 @@ class Game:
                 self.CellNodesEdgeList[index].append(index - self.board_size)
                 self.CellNodesEdgeList[index - self.board_size].append(index)
 
-            if index % self.board_size != (self.board_size - 1) and playerColor == self.CellNodesFeatureList[
+            if index % self.board_size != (self.board_size - 2) and playerColor == self.CellNodesFeatureList[
                 index - self.board_size + 1]:
                 # Up-right
                 self.CellNodesEdgeList[index].append(index - self.board_size + 1)
@@ -166,9 +174,12 @@ class Game:
         # Checks if the move made creates any connections
         self.connectionCheck(index)
 
+        self.detect_bridge(index)
         if option == True:
             # Print current hex diagram
             self.print_hex_diagram()
+
+        self.print_overview()
 
         # Check if there's a winner after the move
         winner = self.winnerCheck()
@@ -177,6 +188,21 @@ class Game:
             return winner
 
         return None
+
+
+
+    def detect_bridge(self, index):
+
+        playerColor = self.CellNodesFeatureList[index]
+        board_size = self.board_size
+
+        # Initialize a list to store the checked empty cells for potential bridges
+
+        # Checks if the current cell is not within the first two rows
+        if index >= 2 * board_size:
+            above_index = self.CellNodesFeatureList[index - self.board_size]
+            if above_index is None:
+                self.PossibleBridgesList.append(above_index)  # Append the index of the cell above
 
     def print_hex_diagram(self):
         print()
@@ -201,6 +227,10 @@ class Game:
         print("Moves done")
         print(self.MoveList)
         print()
+        print("----Detect bridges----")
+        print(self.PossibleBridgesList)
+        print("----")
+
         self.print_hex_diagram()
 
     def RandomAvailableCell(self):
@@ -240,6 +270,9 @@ class Game:
                 print("Connections: ")
                 print(self.CellNodesEdgeList)
                 print()
+                print("Bridges: ")
+                print(self.possible_bridges)
+                print()
         return
 
     def SimulateGame(self, goBack):
@@ -248,9 +281,15 @@ class Game:
             self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        #self.print_overview()
+        self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
 
 
 
+
+game =  Game(6)
+
+game.SimulateGame(0)
+
+game.print_overview()
