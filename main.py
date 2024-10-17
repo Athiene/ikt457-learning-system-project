@@ -10,7 +10,7 @@ import numpy as np
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=25, type=int)
-    parser.add_argument("--number-of-clauses", default=20, type=int)
+    parser.add_argument("--number-of-clauses", default=100, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.0, type=float)
     parser.add_argument("--depth", default=1, type=int)
@@ -53,7 +53,7 @@ graphs_train = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hyp
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
     newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList = newGame_.SimulateGame(1)
+    winner, featureList, edgeList = newGame_.SimulateGame(0)
     Simulation_Train[graph_id][0] = winner
     Simulation_Train[graph_id][1] = featureList
     Simulation_Train[graph_id][2] = edgeList
@@ -96,7 +96,7 @@ graphs_test = Graphs(args.number_of_examples, symbol_names=['R', 'B', 'N'], hype
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
     newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList = newGame_.SimulateGame(1)
+    winner, featureList, edgeList = newGame_.SimulateGame(0)
     Simulation_Test[graph_id][0] = winner
     Simulation_Test[graph_id][1] = featureList
     Simulation_Test[graph_id][2] = edgeList
