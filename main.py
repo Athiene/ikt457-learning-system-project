@@ -10,7 +10,7 @@ import numpy as np
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=25, type=int)
-    parser.add_argument("--number-of-clauses", default=100, type=int)
+    parser.add_argument("--number-of-clauses", default=10000, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.0, type=float)
     parser.add_argument("--depth", default=1, type=int)
@@ -144,9 +144,11 @@ for i in range(args.epochs):
 
     result_train = 100*(tm.predict(graphs_train) == fetch_labels(Simulation_Train)).mean()
 
-    print("%d %.2f %.2f %.2f %.2f" % (i, result_train, result_test, stop_training-start_training, stop_testing-start_testing))
+    #print("%d %.2f %.2f %.2f %.2f" % (i, result_train, result_test, stop_training-start_training, stop_testing-start_testing))
 
 weights = tm.get_state()[1].reshape(2, -1)
+
+"""
 for i in range(tm.number_of_clauses):
         print("Clause #%d W:(%d %d)" % (i, weights[0,i], weights[1,i]), end=' ')
         l = []
@@ -157,3 +159,4 @@ for i in range(tm.number_of_clauses):
                 else:
                     l.append("NOT x%d" % (k - args.hypervector_size))
         print(" AND ".join(l))
+"""
