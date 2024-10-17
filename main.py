@@ -42,7 +42,7 @@ def fetch_labels(labels):
     return int_labels
 
 args = default_args()
-gameboard_size = 9
+gameboard_size = 6
 
 # Lists that contain all the simulated hex games
 Simulation_Train = [[[],[],[]] for _ in range(args.number_of_examples)]
