@@ -19,7 +19,7 @@ def default_args(**kwargs):
     parser.add_argument("--message-size", default=256, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--noise", default=0.2, type=float)
-    parser.add_argument("--number-of-examples", default=10000, type=int)
+    parser.add_argument("--number-of-examples", default=100000, type=int)
     parser.add_argument("--max-sequence-length", default=1000, type=int)
     parser.add_argument("--number-of-classes", default=2, type=int)
     parser.add_argument("--max-included-literals", default=3, type=int)
@@ -42,7 +42,7 @@ def fetch_labels(labels):
     return int_labels
 
 args = default_args()
-gameboard_size = 6
+gameboard_size = 4
 
 # Lists that contain all the simulated hex games
 Simulation_Train = [[[],[],[]] for _ in range(args.number_of_examples)]
