@@ -144,7 +144,7 @@ for i in range(args.epochs):
 
     result_train = 100*(tm.predict(graphs_train) == fetch_labels(Simulation_Train)).mean()
 
-    #print("%d %.2f %.2f %.2f %.2f" % (i, result_train, result_test, stop_training-start_training, stop_testing-start_testing))
+    print("%d %.2f %.2f %.2f %.2f" % (i, result_train, result_test, stop_training-start_training, stop_testing-start_testing))
 
 weights = tm.get_state()[1].reshape(2, -1)
 
