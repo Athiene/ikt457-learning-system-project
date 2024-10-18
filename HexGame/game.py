@@ -14,12 +14,80 @@ class Game:
         self.CellNodesFeatureList = [[None] for _ in range(self.board_size * self.board_size)]
 
         # Creates an array containing arrays
-        # A single array in the array represents the connections of a cell
+        # A single array in the array represents the connections of a cell with the same symbol
         self.CellNodesEdgeList = [[] for _ in range(self.board_size * self.board_size)]
+
+        # Creates an array containing arrays
+        # A single array in the array represents all of the connections of a cell
+        self.all_edges = [[] for _ in range(self.board_size * self.board_size)]
+        self.findAllEdges()
 
         # Array that contains a moves done
         self.MoveList = []
+
+        # Stores the maximum number of edges for each node
+        self.maxEdgesPerNode = [0 for _ in range(self.board_size * self.board_size)]
+        self.calculateMaxEdges()
         return
+
+    def findAllEdges(self):
+        for index in range(self.board_size * self.board_size):
+            # Up connection
+            if index >= self.board_size and (index - self.board_size) not in self.all_edges[index]:
+                self.all_edges[index].append(index - self.board_size)
+                self.all_edges[index - self.board_size].append(index)
+
+            # Up-right connection
+            if index >= self.board_size and index % self.board_size != (self.board_size - 1) and (
+                    index - self.board_size + 1) not in self.all_edges[index]:
+                self.all_edges[index].append(index - self.board_size + 1)
+                self.all_edges[index - self.board_size + 1].append(index)
+
+            # Down connection
+            if index < self.board_size * (self.board_size - 1) and (index + self.board_size) not in self.all_edges[index]:
+                self.all_edges[index].append(index + self.board_size)
+                self.all_edges[index + self.board_size].append(index)
+
+            # Down-left connection
+            if index < self.board_size * (self.board_size - 1) and index % self.board_size != 0 and (
+                    index + self.board_size - 1) not in self.all_edges[index]:
+                self.all_edges[index].append(index + self.board_size - 1)
+                self.all_edges[index + self.board_size - 1].append(index)
+
+            # Right connection
+            if index % self.board_size != (self.board_size - 1) and (index + 1) not in self.all_edges[index]:
+                self.all_edges[index].append(index + 1)
+                self.all_edges[index + 1].append(index)
+
+            # Left connection
+            if index % self.board_size != 0 and (index - 1) not in self.all_edges[index]:
+                self.all_edges[index].append(index - 1)
+                self.all_edges[index - 1].append(index)
+
+    def calculateMaxEdges(self):
+        for index in range(self.board_size * self.board_size):
+            # Up connections
+            if index >= self.board_size:
+                self.maxEdgesPerNode[index] += 1  # Directly above
+                if index % self.board_size != (self.board_size - 1):
+                    self.maxEdgesPerNode[index] += 1  # Up-right
+
+            # Down connections
+            if index < self.board_size * (self.board_size - 1):
+                self.maxEdgesPerNode[index] += 1  # Directly below
+                if index % self.board_size != 0:
+                    self.maxEdgesPerNode[index] += 1  # Down-left
+
+            # Left and right connections
+            if index % self.board_size != (self.board_size - 1):
+                self.maxEdgesPerNode[index] += 1  # Directly to the right
+            if index % self.board_size != 0:
+                self.maxEdgesPerNode[index] += 1  # Directly to the left
+
+    def print_max_edges(self):
+        for i in range(self.board_size):
+            row = self.maxEdgesPerNode[i * self.board_size:(i + 1) * self.board_size]
+            print(f"Row {i}: {row}")
 
     # BROKEN
     def NOTdfs(self, index, playerColor, visited, target_side_condition):
@@ -173,7 +241,7 @@ class Game:
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "Red" or winner == "Blue":
-            #print(f"{winner} has won the game!")
+            # print(f"{winner} has won the game!")
             return winner
 
         return None
@@ -248,9 +316,10 @@ class Game:
             self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        #self.print_overview()
+        # self.print_overview()
         self.returnTurns(goBack, False)
-        return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
+        return self.Winner, self.CellNodesFeatureList, self.all_edges, self.maxEdgesPerNode
+
 
 
 
