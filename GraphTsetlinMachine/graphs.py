@@ -21,11 +21,10 @@
 import numpy as np
 import hashlib
 from numba import jit
-from sympy import prevprime
 import sys
 
 class Graphs():
-	def __init__(self, number_of_graphs, hypervector_size = 128, hypervector_bits = 2, double_hashing=False, symbol_names=None, init_with=None):
+	def __init__(self, number_of_graphs, hypervector_size = 128, hypervector_bits = 2, double_hashing=False, symbols=None, init_with=None):
 		self.number_of_graphs = number_of_graphs
 		self.number_of_graph_nodes = np.zeros(self.number_of_graphs, dtype=np.uint32)
 		self.double_hashing = double_hashing
@@ -39,21 +38,19 @@ class Graphs():
 			self.edge_type_id = {}
 
 			self.symbol_id = {}
-			for symbol_name in symbol_names:
+			for symbol_name in symbols:
 				self.symbol_id[symbol_name] = len(self.symbol_id)
 			self.hypervector_size = hypervector_size
 			self.hypervector_bits = hypervector_bits
 
 			if self.double_hashing:
+				from sympy import prevprime
 				self.hypervector_bits = 2
 				self.hypervectors = np.zeros((len(self.symbol_id), self.hypervector_bits), dtype=np.uint32)
 				prime = prevprime(self.hypervector_size)
 				for i in range(len(self.symbol_id)):
 					self.hypervectors[i, 0] = i % (self.hypervector_size)
 					self.hypervectors[i, 1] = (self.hypervector_size) + prime - (i % prime)
-					#self.hypervectors[indexes[i], 0] = indexes[i] % (self.hypervector_size // 3)
-					#self.hypervectors[indexes[i], 1] = (self.hypervector_size // 3) + prime - (indexes[i] % prime)
-					#self.hypervectors[indexes[i], 2] = 2 * (self.hypervector_size // 3) + (indexes[i] // 27) % (self.hypervector_size // 3)
 			else:
 				self.hypervectors = np.zeros((len(self.symbol_id), self.hypervector_bits), dtype=np.uint32)
 				indexes = np.arange(self.hypervector_size)
@@ -123,7 +120,7 @@ class Graphs():
 
 	@staticmethod
 	@jit(nopython=True)
-	def _add_graph_node_feature(hypervectors, hypervector_size, graph_index, node, symbol, X):
+	def _add_graph_node_property(hypervectors, hypervector_size, graph_index, node, symbol, X):
 		for k in hypervectors[symbol,:]:
 			chunk = k // 32
 			pos = k % 32
@@ -134,8 +131,8 @@ class Graphs():
 			pos = (k + hypervector_size)  % 32
 			X[graph_index + node, chunk] &= ~(1 << pos)
 
-	def add_graph_node_feature(self, graph_id, node_name, symbol):
-		self._add_graph_node_feature(self.hypervectors, self.hypervector_size, self.node_index[graph_id], self.graph_node_id[graph_id][node_name], self.symbol_id[symbol], self.X)
+	def add_graph_node_property(self, graph_id, node_name, symbol):
+		self._add_graph_node_property(self.hypervectors, self.hypervector_size, self.node_index[graph_id], self.graph_node_id[graph_id][node_name], self.symbol_id[symbol], self.X)
 
 	def print_graph(self, graph_id):
 		for node_id in range(self.number_of_graph_nodes[graph_id]):
