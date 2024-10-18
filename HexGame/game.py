@@ -212,10 +212,9 @@ class Game:
 
             # if all the cells needed for bridge pattern for current index is empty, the hex index to make the bridge pattern is appended in a list
                 if self.CellNodesFeatureList[bp_top_index] == [None] and self.CellNodesFeatureList[top_r_index] == [None] and self.CellNodesFeatureList[top_l_index] == [None]:
-                    self.PossibleBridgesList.append(bp_top_index)
+                    self.PossibleBridgesList[index].append(bp_top_index)
                     # self.PossibleBridgesList.append(top_r_index)
                     # self.PossibleBridgesList.append(top_l_index)
-
 
         # Check if upper right bridge pattern is possible
         if index >= board_size and index % self.board_size != (self.board_size - 1):  # Ensure not at right edge
@@ -229,7 +228,7 @@ class Game:
                     index % self.board_size != (self.board_size - 2)):  # Ensure not at right edge
 
                 if self.CellNodesFeatureList[bp_top_right_index] == [None] and self.CellNodesFeatureList[up_l_index] == [None] and self.CellNodesFeatureList[up_r_index] == [None]:
-                    self.PossibleBridgesList.append(bp_top_right_index)
+                    self.PossibleBridgesList[index].append(bp_top_right_index)
                     # self.PossibleBridgesList.append(up_l_index)
                     # self.PossibleBridgesList.append(up_r_index)
 
@@ -246,7 +245,7 @@ class Game:
 
 
                 if self.CellNodesFeatureList[bp_top_left_index] == [None] and self.CellNodesFeatureList[up_l_up_index] == [None] and self.CellNodesFeatureList[up_l_down_index] == [None]:
-                    self.PossibleBridgesList.append(bp_top_left_index)
+                    self.PossibleBridgesList[index].append(bp_top_left_index)
                     #self.PossibleBridgesList.append(up_l_up_index)
                     #self.PossibleBridgesList.append(up_l_down_index)
 
@@ -264,7 +263,7 @@ class Game:
 
                 # if all the cells needed for bridge pattern for current index is empty, the hex index to make the bridge pattern is appended in a list
                 if self.CellNodesFeatureList[bp_bot_index] == [None] and self.CellNodesFeatureList[bot_r_index] == [None] and self.CellNodesFeatureList[bot_l_index] == [None]:
-                    self.PossibleBridgesList.append(bp_bot_index)
+                    self.PossibleBridgesList[index].append(bp_bot_index)
                     # self.PossibleBridgesList.append(bot_l_index)
                     # self.PossibleBridgesList.append(bot_r_index)
 
@@ -280,7 +279,7 @@ class Game:
                     index % self.board_size != (self.board_size + 2)):
 
                 if self.CellNodesFeatureList[bp_bot_right_index] == [None] and self.CellNodesFeatureList[bot_l_index] == [None] and self.CellNodesFeatureList[bot_r_index] == [None]:
-                    self.PossibleBridgesList.append(bp_bot_right_index)
+                    self.PossibleBridgesList[index].append(bp_bot_right_index)
                     # self.PossibleBridgesList.append(bot_l_index)
                     # self.PossibleBridgesList.append(bot_r_index)
 
@@ -296,9 +295,22 @@ class Game:
                     0 <= bot_l_down_index < len(self.CellNodesFeatureList)):
 
                 if self.CellNodesFeatureList[bp_bot_left_index] == [None] and self.CellNodesFeatureList[bot_l_up_index] == [None] and self.CellNodesFeatureList[bot_l_down_index] == [None]:
-                    self.PossibleBridgesList.append(bp_bot_left_index)
+                    self.PossibleBridgesList[index].append(bp_bot_left_index)
                     #self.PossibleBridgesList.append(bot_l_up_index)
                     #self.PossibleBridgesList.append(bot_l_down_index)
+
+    def evalutemove(self, index):
+        score = 0
+
+        score += self.connectionCheck(index)
+
+        if self.detect_bridge(index):
+            score += 2
+
+        return score
+
+
+
 
     def print_hex_diagram(self):
         print()
