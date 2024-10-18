@@ -58,7 +58,7 @@ def print_gameboards(simulations, gameboard_size):
 args = default_args()
 gameboard_size = 6
 
-################## CREATING TRAINING DATA
+################## CREATING TRAINING DATA #####################
 
 print("Creating training data")
 
@@ -70,7 +70,7 @@ graphs_train = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervec
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
     newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(0)
+    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
     Simulation_Train[graph_id][0] = winner
     Simulation_Train[graph_id][1] = featureList
     Simulation_Train[graph_id][2] = edgeList
@@ -106,7 +106,7 @@ for graph_id in range(args.number_of_examples):
 
 graphs_train.encode()
 
-######### CREATING TESTING DATA
+######### CREATING TESTING DATA #####################
 
 print("Creating testing data")
 
@@ -117,7 +117,7 @@ graphs_test = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervect
 for graph_id in range(args.number_of_examples):
     # Fetches simulated game of hex
     newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(0)
+    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
     Simulation_Test[graph_id][0] = winner
     Simulation_Test[graph_id][1] = featureList
     Simulation_Test[graph_id][2] = edgeList

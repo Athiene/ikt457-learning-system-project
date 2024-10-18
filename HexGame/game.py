@@ -1,5 +1,6 @@
 import random
 
+
 class Game:
 
     # On initilize
@@ -89,25 +90,6 @@ class Game:
             row = self.maxEdgesPerNode[i * self.board_size:(i + 1) * self.board_size]
             print(f"Row {i}: {row}")
 
-    # BROKEN
-    def NOTdfs(self, index, playerColor, visited, target_side_condition):
-
-        # Perform DFS to check for continuous connections to the target side
-        if index in visited:
-            return False
-
-        visited.add(index)
-
-        # Check if this cell reaches the target side (for Red: bottom, for Blue: right)
-        if target_side_condition(index):
-            return True
-
-        # Explore connected nodes for the current player
-        for neighbor in self.CellNodesEdgeList[index]:
-            if self.CellNodesFeatureList[neighbor] == playerColor:
-                if self.dfs(neighbor, playerColor, visited, target_side_condition):
-                    return True
-        return False
 
     def dfs(self, index, playerColor, visited, target_side_condition):
         # If already visited return false
@@ -144,41 +126,6 @@ class Game:
                 if self.dfs(index, "Blue", visited, lambda i: i % self.board_size == (self.board_size - 1)):
                     return "Blue"
         return None
-
-    # BROKEN
-    def NOTconnectionCheck(self, index):
-        playerColor = self.CellNodesFeatureList[index]
-
-        if (index > self.board_size):
-            # Checks cells from the row above for connections
-            if playerColor == self.CellNodesFeatureList[index - self.board_size]:
-                self.CellNodesEdgeList[index].append(index - self.board_size)
-                self.CellNodesEdgeList[index - self.board_size].append(index)
-
-            if playerColor == self.CellNodesFeatureList[(index - self.board_size) + 1]:
-                self.CellNodesEdgeList[index].append((index - self.board_size) + 1)
-                self.CellNodesEdgeList[(index - self.board_size) + 1].append(index)
-
-        if (index < (self.board_size * (self.board_size - 1))):
-            # Checks cells from the row under for connections
-            if playerColor == self.CellNodesFeatureList[index + self.board_size]:
-                self.CellNodesEdgeList[index].append(index + self.board_size)
-                self.CellNodesEdgeList[index + self.board_size].append(index)
-
-            if playerColor == self.CellNodesFeatureList[(index + self.board_size) - 1]:
-                self.CellNodesEdgeList[index].append((index + self.board_size) - 1)
-                self.CellNodesEdgeList[(index + self.board_size) - 1].append(index)
-
-        # Checks cells on its right for connection
-        if index != ((self.board_size * self.board_size) - 1) and playerColor == self.CellNodesFeatureList[index + 1]:
-            self.CellNodesEdgeList[index].append(index + 1)
-            self.CellNodesEdgeList[index + 1].append(index)
-
-        # Checks cells on its left for connection
-        if index != 0 and playerColor == self.CellNodesFeatureList[index - 1]:
-            self.CellNodesEdgeList[index].append(index - 1)
-            self.CellNodesEdgeList[index - 1].append(index)
-        return
 
     # Check cells for connections
     def connectionCheck(self, index):
@@ -319,7 +266,5 @@ class Game:
         # self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges, self.maxEdgesPerNode
-
-
 
 
