@@ -44,24 +44,38 @@ def read_from_csv(filename):
         reader = csv.DictReader(file)
         for row in reader:
             winner = int(row['winner'])
-            features = eval(row['feature'])  # Convert string representation of list to list
-            edges = eval(row['edges'])  # Convert string representation of list to list
+            features = eval(row['feature'])
+            edges = eval(row['edges'])
             simulations.append([winner, features, edges])
     return simulations
 
 
 def prepare_graphs(simulations, graphs):
+
+    for graph_id, simulation in enumerate(simulations):
+        for node_id in range(len(Simulation_Train[graph_id][3])):
+            winner, featureList, edgeList = simulation
+            graphs.set_number_of_graph_nodes(graph_id, len(featureList))
+
+    graphs_train.prepare_node_configuration()
+
     for graph_id, simulation in enumerate(simulations):
         winner, featureList, edgeList = simulation
-        graphs.set_number_of_graph_nodes(graph_id, len(featureList))
+        for node_id in range(len(edgeList)):
+            if edgeList[node_id]:
+                graphs_train.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
 
-        # Prepare node configuration
-        for node_id in range(len(featureList)):
+    graphs_train.prepare_edge_configuration()
+
+    # Adds actual values i.e: features and edges
+    for graph_id, simulation in enumerate(simulations):
+        winner, featureList, edgeList = simulation
+        for node_id in range(len(edgeList)):
+
             if edgeList[node_id]:
                 for edge in edgeList[node_id]:
                     graphs.add_graph_node_edge(graph_id, node_id, edge, 0)
 
-            # Set the node property based on the feature
             if featureList[node_id] == 'Red':
                 graphs.add_graph_node_property(graph_id, node_id, 'R')
             elif featureList[node_id] == 'Blue':
@@ -69,7 +83,7 @@ def prepare_graphs(simulations, graphs):
             else:
                 graphs.add_graph_node_property(graph_id, node_id, 'N')
 
-    graphs.encode()
+    graphs_train.encode()
 
 
 args = default_args()
