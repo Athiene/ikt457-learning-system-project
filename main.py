@@ -53,9 +53,8 @@ def read_from_csv(filename):
 def prepare_graphs(simulations, graphs):
 
     for graph_id, simulation in enumerate(simulations):
-        for node_id in range(len(Simulation_Train[graph_id][3])):
-            winner, featureList, edgeList = simulation
-            graphs.set_number_of_graph_nodes(graph_id, len(featureList))
+        winner, featureList, edgeList = simulation
+        graphs.set_number_of_graph_nodes(graph_id, len(featureList))
 
     graphs_train.prepare_node_configuration()
 
