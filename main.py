@@ -81,7 +81,7 @@ gameboard_size = 6
 print("Reading data from CSV")
 
 # Read training and testing data from CSV files
-simulation_data = read_from_csv("HexGame/3x3_set.csv")
+simulation_data = read_from_csv("3x3_set.csv")
 
 # Split the data into training and testing sets (for example, first half for training, second for testing)
 mid_index = len(simulation_data) // 2
