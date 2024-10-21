@@ -57,7 +57,6 @@ def prepare_graphs(simulations, graphs):
 
         # Prepare node configuration
         for node_id in range(len(featureList)):
-            graphs.add_graph_node(graph_id, node_id, None)  # Set to None or appropriate value
             if edgeList[node_id]:
                 for edge in edgeList[node_id]:
                     graphs.add_graph_node_edge(graph_id, node_id, edge, 0)
