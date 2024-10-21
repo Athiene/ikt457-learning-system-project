@@ -26,6 +26,7 @@ class Game:
         # Array that contains the possible bridges
         self.PossibleBridgesList = [[] for _ in range(self.board_size * self.board_size)]
 
+        self.OpponentBridgesList = [[] for _ in range(self.board_size * self.board_size)]
         return
 
     # BROKEN
@@ -157,41 +158,11 @@ class Game:
             self.CellNodesEdgeList[index].append(index - 1)
             self.CellNodesEdgeList[index - 1].append(index)
 
-    # Makes random move
-    def makeMove(self, option, index):
-
-        # Changes the cells to corresponding player color: Red or Blue
-        if self.Player1:
-            self.CellNodesFeatureList[index] = "Red"
-            self.Player1 = False
-        else:
-            self.CellNodesFeatureList[index] = "Blue"
-            self.Player1 = True
-
-        # Append the move (index) in MoveList
-        self.MoveList.append(index)
-
-        # Checks if the move made creates any connections
-        self.connectionCheck(index)
-
-        self.detect_bridge(index)
-        if option == True:
-            # Print current hex diagram
-            self.print_hex_diagram()
-
-        self.print_overview()
-
-        # Check if there's a winner after the move
-        winner = self.winnerCheck()
-        if winner == "Red" or winner == "Blue":
-            #print(f"{winner} has won the game!")
-            return winner
-
-        return None
 
 
 
     def detect_bridge(self, index):
+
 
         playerColor = self.CellNodesFeatureList[index]
         board_size = self.board_size
@@ -216,6 +187,8 @@ class Game:
                     # self.PossibleBridgesList.append(top_r_index)
                     # self.PossibleBridgesList.append(top_l_index)
 
+
+
         # Check if upper right bridge pattern is possible
         if index >= board_size and index % self.board_size != (self.board_size - 1):  # Ensure not at right edge
             bp_top_right_index = (index - self.board_size + 2)
@@ -232,7 +205,6 @@ class Game:
                     # self.PossibleBridgesList.append(up_l_index)
                     # self.PossibleBridgesList.append(up_r_index)
 
-
         #Check if upper left bridge pattern is possible
         if index >= board_size and index % self.board_size != 0:
             bp_top_left_index = (index - self.board_size - 1)
@@ -248,6 +220,7 @@ class Game:
                     self.PossibleBridgesList[index].append(bp_top_left_index)
                     #self.PossibleBridgesList.append(up_l_up_index)
                     #self.PossibleBridgesList.append(up_l_down_index)
+
 
         # Check if most down bridge pattern is possible
         if index >= -2 * board_size:
@@ -266,6 +239,7 @@ class Game:
                     self.PossibleBridgesList[index].append(bp_bot_index)
                     # self.PossibleBridgesList.append(bot_l_index)
                     # self.PossibleBridgesList.append(bot_r_index)
+
 
         # Check if down right bridge pattern is possible
         if index < self.board_size * (self.board_size - 1) and index % self.board_size != (self.board_size - 1):
@@ -299,17 +273,250 @@ class Game:
                     #self.PossibleBridgesList.append(bot_l_up_index)
                     #self.PossibleBridgesList.append(bot_l_down_index)
 
-    def evalutemove(self, index):
+    def detect_opponent_bridge(self, index, opponentColor):
+
+        # Assuming playerColor is the current player's color
+        playerColor = self.CellNodesFeatureList[index]
+
+        # Define the opponent's color based on the player's color
+        if playerColor == 'Blue':
+            opponentColor = 'Red'
+        else:
+            opponentColor = 'Blue'
+
+        board_size = self.board_size
+
+        # Check if most upper bridge pattern is possible
+        if index >= 2 * board_size:
+            #the two row above index & the above and above-right index
+            bp_top_index = (index - 2 * self.board_size+1)
+            top_r_index = (index - self.board_size+1)
+            top_l_index = (index - self.board_size)
+
+            if (0 <= bp_top_index < len(self.CellNodesFeatureList) and
+                    0 <= top_r_index < len(self.CellNodesFeatureList) and
+                    0 <= top_l_index < len(self.CellNodesFeatureList)and
+                    index % self.board_size != (self.board_size - 1) and
+                    index % self.board_size != (self.board_size + 1)):
+
+                # If all the cells needed for opponent's bridge pattern are of the opponent's color
+                if ((self.CellNodesFeatureList[bp_top_index] == opponentColor and
+                        self.CellNodesFeatureList[top_r_index] == opponentColor and
+                        self.CellNodesFeatureList[top_l_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_top_index] == opponentColor and
+                         self.CellNodesFeatureList[top_l_index] == opponentColor and
+                         self.CellNodesFeatureList[top_r_index] == [None]) or
+
+                        (self.CellNodesFeatureList[top_l_index] == opponentColor and
+                         self.CellNodesFeatureList[top_r_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_top_index] == [None])):
+                        self.OpponentBridgesList[index].append(bp_top_index)
+
+
+        # Check if upper right bridge pattern is possible
+        if index >= board_size and index % self.board_size != (self.board_size - 1):  # Ensure not at right edge
+            bp_top_right_index = (index - self.board_size + 2)
+            up_l_index = (index - self.board_size + 1)
+            up_r_index = (index + 1)
+
+            if (0 <= bp_top_right_index < len(self.CellNodesFeatureList) and
+                    0 <= up_l_index < len(self.CellNodesFeatureList) and
+                    0 <= up_r_index < len(self.CellNodesFeatureList) and
+                    index % self.board_size != (self.board_size - 2)):  # Ensure not at right edge
+
+                # If all the cells needed for opponent's bridge pattern are of the opponent's color
+                if ((self.CellNodesFeatureList[bp_top_right_index] == opponentColor and
+                        self.CellNodesFeatureList[up_r_index] == opponentColor and
+                        self.CellNodesFeatureList[up_l_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_top_right_index] == opponentColor and
+                         self.CellNodesFeatureList[up_l_index] == opponentColor and
+                         self.CellNodesFeatureList[up_r_index] == [None]) or
+
+                        (self.CellNodesFeatureList[up_l_index] == opponentColor and
+                         self.CellNodesFeatureList[up_r_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_top_right_index] == [None])):
+
+                        self.OpponentBridgesList[index].append(bp_top_right_index)
+
+
+        #Check if upper left bridge pattern is possible
+        if index >= board_size and index % self.board_size != 0:
+            bp_top_left_index = (index - self.board_size - 1)
+            up_l_up_index = (index - self.board_size )
+            up_l_down_index = (index - 1)
+
+            if (0 <= bp_top_left_index < len(self.CellNodesFeatureList) and
+                    0 <= up_l_up_index < len(self.CellNodesFeatureList) and
+                    0 <= up_l_down_index < len(self.CellNodesFeatureList)):  # Ensure not at right edge
+
+
+                if ((self.CellNodesFeatureList[bp_top_left_index] == opponentColor and
+                        self.CellNodesFeatureList[up_l_up_index] == opponentColor and
+                        self.CellNodesFeatureList[up_l_down_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_top_left_index] == opponentColor and
+                         self.CellNodesFeatureList[up_l_down_index] == opponentColor and
+                         self.CellNodesFeatureList[up_l_up_index] == [None]) or
+
+                        (self.CellNodesFeatureList[up_l_up_index] == opponentColor and
+                         self.CellNodesFeatureList[up_l_down_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_top_left_index] == [None])):
+                        self.OpponentBridgesList[index].append(bp_top_left_index)
+
+
+
+            # Check if most down bridge pattern is possible
+        if index >= -2 * board_size:
+            # the two row above index & the above and above-right index
+            bp_bot_index = (index + 2 * self.board_size - 1)
+            bot_r_index = (index + self.board_size - 1)
+            bot_l_index = (index + self.board_size)
+
+            if (0 <= bp_bot_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_r_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_l_index < len(self.CellNodesFeatureList) and
+                    index % self.board_size != (self.board_size + 2)):
+
+                if ((self.CellNodesFeatureList[bp_bot_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_r_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_l_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_bot_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_r_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bot_r_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_bot_index] == [None])):
+
+                        self.OpponentBridgesList[index].append(bp_bot_index)
+
+
+
+
+        # Check if down right bridge pattern is possible
+        if index < self.board_size * (self.board_size - 1) and index % self.board_size != (self.board_size - 1):
+            bp_bot_right_index = (index + self.board_size + 1)
+            bot_l_index = (index + self.board_size )
+            bot_r_index = (index + 1)
+
+            if (0 <= bp_bot_right_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_l_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_r_index < len(self.CellNodesFeatureList) and
+                    index % self.board_size != (self.board_size + 2)):
+
+                if ((self.CellNodesFeatureList[bp_bot_right_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_r_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_l_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_bot_right_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_r_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bot_r_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_bot_right_index] == [None])):
+
+                        self.OpponentBridgesList[index].append(bp_bot_right_index)
+
+
+        # Check if down left bridge pattern is possible
+        if  index < self.board_size * (self.board_size - 1) and index % self.board_size > 1:
+            bp_bot_left_index = (index + self.board_size - 2)
+            bot_l_down_index = (index + self.board_size - 1)
+            bot_l_up_index = (index - 1)
+
+            if (0 <= bp_bot_left_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_l_up_index < len(self.CellNodesFeatureList) and
+                    0 <= bot_l_down_index < len(self.CellNodesFeatureList)):
+
+                if ((self.CellNodesFeatureList[bp_bot_left_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_l_up_index] == opponentColor and
+                        self.CellNodesFeatureList[bot_l_down_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bp_bot_left_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_down_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_up_index] == [None]) or
+
+                        (self.CellNodesFeatureList[bot_l_up_index] == opponentColor and
+                         self.CellNodesFeatureList[bot_l_down_index] == opponentColor and
+                         self.CellNodesFeatureList[bp_bot_left_index] == [None])):
+
+                        self.OpponentBridgesList[index].append(bp_bot_left_index)
+
+
+        # Makes random move
+    """
+    def makeMove(self, option, index):
+
+        # Changes the cells to corresponding player color: Red or Blue
+        if self.Player1:
+            self.CellNodesFeatureList[index] = "Red"
+            self.Player1 = False
+        else:
+            self.CellNodesFeatureList[index] = "Blue"
+            self.Player1 = True
+
+        # Append the move (index) in MoveList
+        self.MoveList.append(index)
+
+        # Checks if the move made creates any connections
+        self.connectionCheck(index)
+
+        if option == True:
+            # Print current hex diagram
+            self.print_hex_diagram()
+
+        # Check if there's a winner after the move
+        winner = self.winnerCheck()
+        if winner == "Red" or winner == "Blue":
+            # print(f"{winner} has won the game!")
+            return winner
+
+        return None
+    """
+
+    def evaluateMove(self, index):
         score = 0
 
-        score += self.connectionCheck(index)
+        playerColor = self.CellNodesFeatureList[index]
+
+        score+= self.connectionCheck(index)
 
         if self.detect_bridge(index):
-            score += 2
+            score+=2
+
+
+        opponentColor = 'Red' if playerColor == 'Blue' else 'Blue'
+        if self.detect_opponent_bridge(index, opponentColor):
+            score -= 2
 
         return score
 
+    def makeBestMove(self, option):
+        none_cells = [i for i, cell in enumerate(self.CellNodesFeatureList) if cell == [None]]
 
+        best_move = None
+        best_score = -float('int')
+
+        for move in none_cells:
+            score = self.evaluateMove(move)
+            if score > best_score:
+                best_move = move
+                best_score = score
+
+        self.makeBestMove(best_move, option)
+
+
+    def RandomAvailableCell(self):
+        # Create a list of all valid (x, y) coordinates where the cell is [None]
+        none_cells = [i for i, cell in enumerate(self.CellNodesFeatureList) if cell == [None]]
+
+        # Selects a random cell from all of the available cells
+        index = random.choice(none_cells)
+        return index
 
 
     def print_hex_diagram(self):
@@ -341,13 +548,7 @@ class Game:
 
         self.print_hex_diagram()
 
-    def RandomAvailableCell(self):
-        # Create a list of all valid (x, y) coordinates where the cell is [None]
-        none_cells = [i for i, cell in enumerate(self.CellNodesFeatureList) if cell == [None]]
 
-        # Selects a random cell from all of the available cells
-        index = random.choice(none_cells)
-        return index
 
     def returnTurns(self, goBack, option):
         if goBack == 0:
@@ -383,6 +584,7 @@ class Game:
                 print()
         return
 
+
     def SimulateGame(self, goBack):
         condition = True
         while condition:
@@ -392,7 +594,6 @@ class Game:
         self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.CellNodesEdgeList
-
 
 
 
