@@ -1,10 +1,9 @@
-from GraphTsetlinMachine.graphs import Graphs
-from scipy.sparse import csr_matrix
+import csv
 import argparse
-from HexGame import game
-from time import time
+from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 import numpy as np
+from time import time
 
 
 def default_args(**kwargs):
@@ -36,124 +35,71 @@ def fetch_labels(labels):
             int_labels = np.append(int_labels, 0)
         elif labels[index][0] == 'Blue':
             int_labels = np.append(int_labels, 1)
-    # print(int_labels)
     return int_labels
 
 
-def print_gameboards(simulations, gameboard_size):
-    for game_index, simulation in enumerate(simulations):
-        print(f"Game {game_index + 1}:")
+def read_from_csv(filename):
+    simulations = []
+    with open(filename, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            winner = int(row['winner'])
+            features = eval(row['feature'])  # Convert string representation of list to list
+            edges = eval(row['edges'])  # Convert string representation of list to list
+            simulations.append([winner, features, edges])
+    return simulations
 
-        # Create a new game object with the same board size
-        newGame_ = game.Game(gameboard_size)
 
-        # Populate the game object with the simulated features and edges
-        newGame_.CellNodesFeatureList = simulation[1]  # Load the feature list
-        newGame_.CellNodesEdgeList = simulation[2]  # Load the edge list
+def prepare_graphs(simulations, graphs):
+    for graph_id, simulation in enumerate(simulations):
+        winner, featureList, edgeList = simulation
+        graphs.set_number_of_graph_nodes(graph_id, len(featureList))
 
-        # Print the current game state
-        newGame_.print_hex_diagram()
+        # Prepare node configuration
+        for node_id in range(len(featureList)):
+            graphs.add_graph_node(graph_id, node_id, None)  # Set to None or appropriate value
+            if edgeList[node_id]:
+                for edge in edgeList[node_id]:
+                    graphs.add_graph_node_edge(graph_id, node_id, edge, 0)
+
+            # Set the node property based on the feature
+            if featureList[node_id] == 'Red':
+                graphs.add_graph_node_property(graph_id, node_id, 'R')
+            elif featureList[node_id] == 'Blue':
+                graphs.add_graph_node_property(graph_id, node_id, 'B')
+            else:
+                graphs.add_graph_node_property(graph_id, node_id, 'N')
+
+    graphs.encode()
 
 
 args = default_args()
 gameboard_size = 6
 
-################## CREATING TRAINING DATA #####################
+################## READING DATA FROM CSV #####################
 
-print("Creating training data")
+print("Reading data from CSV")
 
-# Lists that contain all the simulated hex games
-Simulation_Train = [[[], [], [], []] for _ in range(args.number_of_examples)]
+# Read training and testing data from CSV files
+simulation_data = read_from_csv("3x3_set.csv")
 
-graphs_train = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
-                      hypervector_bits=args.hypervector_bits, double_hashing=args.double_hashing, )
-for graph_id in range(args.number_of_examples):
-    # Fetches simulated game of hex
-    newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
-    Simulation_Train[graph_id][0] = winner
-    Simulation_Train[graph_id][1] = featureList
-    Simulation_Train[graph_id][2] = edgeList
-    Simulation_Train[graph_id][3] = maxEdges
-    # Sets the correct amount of nodes in a graph
-    graphs_train.set_number_of_graph_nodes(graph_id, len(featureList))
+# Split the data into training and testing sets (for example, first half for training, second for testing)
+mid_index = len(simulation_data) // 2
+Simulation_Train = simulation_data[:mid_index]
+Simulation_Test = simulation_data[mid_index:]
 
-graphs_train.prepare_node_configuration()
-
-for graph_id in range(args.number_of_examples):
-    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(len(Simulation_Train[graph_id][3])):
-        graphs_train.add_graph_node(graph_id, node_id, Simulation_Train[graph_id][3][node_id])
-
-graphs_train.prepare_edge_configuration()
-
-# Adds actual values i.e: features and edges
-for graph_id in range(args.number_of_examples):
-    for node_id in range(len(Simulation_Train[graph_id][2])):
-        if Simulation_Train[graph_id][2][node_id]:
-            for edge in Simulation_Train[graph_id][2][node_id]:
-                graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
-
-    for node_id in range(len(Simulation_Train[graph_id][2])):
-        if Simulation_Train[graph_id][1][node_id] == 'Red':
-            graphs_train.add_graph_node_property(graph_id, node_id, 'R')
-            continue
-        if Simulation_Train[graph_id][1][node_id] == 'Blue':
-            graphs_train.add_graph_node_property(graph_id, node_id, 'B')
-            continue
-        if Simulation_Train[graph_id][1][node_id] == [None]:
-            graphs_train.add_graph_node_property(graph_id, node_id, 'N')
-
-graphs_train.encode()
-
-######### CREATING TESTING DATA #####################
-
-print("Creating testing data")
-
-Simulation_Test = [[[], [], [], []] for _ in range(args.number_of_examples)]
-
-graphs_test = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
+# Initialize Graphs for training and testing
+graphs_train = Graphs(len(Simulation_Train), symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
+                      hypervector_bits=args.hypervector_bits, double_hashing=args.double_hashing)
+graphs_test = Graphs(len(Simulation_Test), symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
                      hypervector_bits=args.hypervector_bits)
-for graph_id in range(args.number_of_examples):
-    # Fetches simulated game of hex
-    newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
-    Simulation_Test[graph_id][0] = winner
-    Simulation_Test[graph_id][1] = featureList
-    Simulation_Test[graph_id][2] = edgeList
-    Simulation_Test[graph_id][3] = maxEdges
-    # Sets the correct amount of nodes in a graph
-    graphs_test.set_number_of_graph_nodes(graph_id, len(featureList))
 
-graphs_test.prepare_node_configuration()
+# Prepare the training graphs
+prepare_graphs(Simulation_Train, graphs_train)
+# Prepare the testing graphs
+prepare_graphs(Simulation_Test, graphs_test)
 
-for graph_id in range(args.number_of_examples):
-    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(len(Simulation_Test[graph_id][3])):
-        graphs_test.add_graph_node(graph_id, node_id, Simulation_Test[graph_id][3][node_id])
-
-graphs_test.prepare_edge_configuration()
-
-# Adds actual values i.e: features and edges
-for graph_id in range(args.number_of_examples):
-    for node_id in range(len(Simulation_Test[graph_id][2])):
-        if Simulation_Test[graph_id][2][node_id]:
-            for edge in Simulation_Test[graph_id][2][node_id]:
-                graphs_test.add_graph_node_edge(graph_id, node_id, edge, 0)
-
-    for node_id in range(len(Simulation_Test[graph_id][2])):
-        if Simulation_Test[graph_id][1][node_id] == 'Red':
-            graphs_test.add_graph_node_property(graph_id, node_id, 'R')
-            continue
-        if Simulation_Test[graph_id][1][node_id] == 'Blue':
-            graphs_test.add_graph_node_property(graph_id, node_id, 'B')
-            continue
-        if Simulation_Test[graph_id][1][node_id] == [None]:
-            graphs_test.add_graph_node_property(graph_id, node_id, 'N')
-
-graphs_test.encode()
-
-############### PREDUICTION ###############
+############### PREDICTION ###############
 
 # Train the Tsetlin Machine
 tm = MultiClassGraphTsetlinMachine(

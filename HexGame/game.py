@@ -1,6 +1,5 @@
 import random
 
-
 class Game:
 
     # On initilize
@@ -12,7 +11,7 @@ class Game:
         # Create an array containing arrays
         # A single array represents a cell in the hex game
         # This array of array represents the features of a cell
-        self.CellNodesFeatureList = [[None] for _ in range(self.board_size * self.board_size)]
+        self.CellNodesFeatureList = ["None" for _ in range(self.board_size * self.board_size)]
 
         # Creates an array containing arrays
         # A single array in the array represents the connections of a cell with the same symbol
@@ -117,14 +116,14 @@ class Game:
             if self.CellNodesFeatureList[index] == "Red":
                 visited = set()
                 if self.dfs(index, "Red", visited, lambda i: i >= (self.board_size * (self.board_size - 1))):
-                    return "Red"
+                    return "0"
 
         # Check for Blue (from left to right)
         for index in range(0, self.board_size * self.board_size, self.board_size):
             if self.CellNodesFeatureList[index] == "Blue":
                 visited = set()
                 if self.dfs(index, "Blue", visited, lambda i: i % self.board_size == (self.board_size - 1)):
-                    return "Blue"
+                    return "1"
         return None
 
     # Check cells for connections
@@ -187,7 +186,7 @@ class Game:
 
         # Check if there's a winner after the move
         winner = self.winnerCheck()
-        if winner == "Red" or winner == "Blue":
+        if winner == "1" or winner == "0":
             # print(f"{winner} has won the game!")
             return winner
 
@@ -219,8 +218,8 @@ class Game:
         self.print_hex_diagram()
 
     def RandomAvailableCell(self):
-        # Create a list of all valid (x, y) coordinates where the cell is [None]
-        none_cells = [i for i, cell in enumerate(self.CellNodesFeatureList) if cell == [None]]
+        # Create a list of all valid (x, y) coordinates where the cell is "None"
+        none_cells = [i for i, cell in enumerate(self.CellNodesFeatureList) if cell == "None"]
 
         # Selects a random cell from all of the available cells
         index = random.choice(none_cells)
@@ -234,8 +233,8 @@ class Game:
             # Removes the last index from MoveList
             lastIndex = self.MoveList.pop()
 
-            # Removes any player feature at index lastIndex and sets it to [None]
-            self.CellNodesFeatureList[lastIndex] = [None]
+            # Removes any player feature at index lastIndex and sets it to "None"
+            self.CellNodesFeatureList[lastIndex] = "None"
 
             # Clear any connections related to lastIndex
             for edges in self.CellNodesEdgeList:
@@ -265,6 +264,6 @@ class Game:
                 condition = False
         # self.print_overview()
         self.returnTurns(goBack, False)
-        return self.Winner, self.CellNodesFeatureList, self.all_edges, self.maxEdgesPerNode
+        return self.Winner, self.CellNodesFeatureList, self.all_edges
 
 
