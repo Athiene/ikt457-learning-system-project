@@ -60,7 +60,8 @@ csvName = "3x3_set"
 if os.path.isfile(csvName + ".csv"):
     print("FILE ALREADY EXISTS")
 
-# createCSV(board_size=3, examples=args.number_of_examples, goBack=0, CSVname=csvName)
+if not os.path.isfile(csvName + ".csv"):
+    createCSV(board_size=3, examples=args.number_of_examples, goBack=0, CSVname=csvName)
 
 ################## READING DATA FROM CSV #####################
 
