@@ -11,6 +11,3 @@ def createCSV(board_size, examples, goBack, CSVname):
             new_game = game.Game(board_size)
             winner, feature, edges = new_game.SimulateGame(goBack)
             writer.writerow([winner, feature, edges])
-
-
-createCSV(board_size=3,examples=10,goBack=0,CSVname="3x3_set")
