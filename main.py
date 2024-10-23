@@ -7,20 +7,21 @@ from time import time
 from createData import createCSV
 import os.path
 import random
+from sklearn.model_selection import train_test_split
 
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=200, type=int)
-    parser.add_argument("--T", default=4000, type=int)
-    parser.add_argument("--s", default=1, type=float)
+    parser.add_argument("--number-of-clauses", default=600, type=int)
+    parser.add_argument("--T", default=800, type=int)
+    parser.add_argument("--s", default=1.2, type=float)
     parser.add_argument("--depth", default=6, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=512, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
-    parser.add_argument("--number-of-examples", default=6000, type=int)
+    parser.add_argument("--number-of-examples", default=50000, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
     parser.add_argument("--max-included-literals", default=16, type=int)
 
@@ -54,8 +55,8 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 3
-csvName = "3x3_set"
+gameboard_size = 13
+csvName = "13x13_set"
 
 if os.path.isfile(csvName + ".csv"):
     print("FILE ALREADY EXISTS")
@@ -89,47 +90,23 @@ print(f"RED VS BLUE WINS: ({len(red_wins)}, {len(blue_wins)})")
 num_red_wins = len(red_wins)
 num_blue_wins = len(blue_wins)
 
-# Ensure the number of red and blue wins is even for both training and testing
-max_even_wins = num_blue_wins
+red_samples = red_wins[:num_blue_wins]
+blue_samples = blue_wins
 
-# Split data for training (90%) and testing (10%)
-num_train_samples = int(max_even_wins * 0.9)  # 90% for training
-num_test_samples = max_even_wins - num_train_samples  # 10% for testing
+print(f"RED SAMPLES vs BLUE SAMPLES: ({len(red_samples)}, {len(blue_samples)})")
 
-# Determine number of red and blue wins for training and testing
-red_train_samples_count = num_train_samples // 2
-blue_train_samples_count = num_train_samples // 2
-red_test_samples_count = num_test_samples // 2
-blue_test_samples_count = num_test_samples // 2
+red_slice = int(0.9 * len(red_samples))
+blue_slice = int(0.9 * len(blue_samples))
 
-# Randomly sample for training data
-random.seed(42)  # Set a seed for reproducibility
-red_train_samples = random.sample(red_wins, red_train_samples_count)
-blue_train_samples = random.sample(blue_wins, blue_train_samples_count)
+train_red_sample = red_samples[:red_slice]
+train_blue_sample = blue_samples[:blue_slice]
 
-# Ensure enough samples remain for testing
-remaining_red_wins = [x for x in red_wins if x not in red_train_samples]
-remaining_blue_wins = [x for x in blue_wins if x not in blue_train_samples]
-
-# Adjust the test sample counts based on remaining samples
-red_test_samples_count = min(red_test_samples_count, len(remaining_red_wins))
-blue_test_samples_count = min(blue_test_samples_count, len(remaining_blue_wins))
-
-# Determine the maximum number of test samples we can take to ensure equality
-max_test_samples = min(len(remaining_red_wins), len(remaining_blue_wins), red_test_samples_count,
-                       blue_test_samples_count)
-
-# Adjust the counts for testing samples
-red_test_samples_count = max_test_samples
-blue_test_samples_count = max_test_samples
-
-# Randomly sample test data
-red_test_samples = random.sample(remaining_red_wins, red_test_samples_count)
-blue_test_samples = random.sample(remaining_blue_wins, blue_test_samples_count)
+test_red_sample = red_samples[red_slice:]
+test_blue_sample = blue_samples[blue_slice:]
 
 # Combine red and blue wins for training and test data
-Simulation_Train = red_train_samples + blue_train_samples
-Simulation_Test = red_test_samples + blue_test_samples
+Simulation_Train = train_red_sample + train_blue_sample
+Simulation_Test = test_red_sample + test_blue_sample
 
 # Shuffle the data to ensure random placement of red and blue wins
 random.shuffle(Simulation_Train)
@@ -141,8 +118,10 @@ print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
 Y = np.array([simulation[0] for simulation in Simulation_Train])
 Y_test = np.array([simulation[0] for simulation in Simulation_Test])
 
+"""
 for i in range(len(Simulation_Test)):
     print(Simulation_Test[i])
+"""
 
 print("Y: ", Y)
 print("Y_test: ", Y_test)
@@ -160,7 +139,7 @@ graphs_train = Graphs(
     symbols=['R', 'B', 'N'],
     hypervector_size=args.hypervector_size,
     hypervector_bits=args.hypervector_bits,
-    # double_hashing=args.double_hashing
+    double_hashing=args.double_hashing
 )
 
 for graph_id, simulation in enumerate(Simulation_Train):
@@ -255,21 +234,33 @@ tm = MultiClassGraphTsetlinMachine(
     message_size=args.message_size,
     message_bits=args.message_bits,
     max_included_literals=args.max_included_literals,
+    grid=(16 * 13, 1, 1),
+    block=(128, 1, 1)
 )
 
 start_training = time()
 for i in range(args.epochs):
     tm.fit(graphs_train, Y, epochs=1, incremental=True)
-    print(f"Epoch#{i + 1} -- Accuracy train: {np.mean(Y == tm.predict(graphs_train))}",
+
+    train_prediction = tm.predict(graphs_train)
+    test_prediction = tm.predict(graphs_test)
+    print(f"Epoch#{i + 1}")
+    print(f"-- Accuracy train: {np.mean(Y == train_prediction)}",
           end=' ')
-    print(f"-- Accuracy test: {np.mean(Y_test == tm.predict(graphs_test))} ")
-    # Assuming tm is your model and graphs_train is your input data
-    predictions = tm.predict(graphs_train)
+    print("")
     # Count occurrences of 1s and 0s
-    count_1 = sum(1 for prediction in predictions if prediction == 1)
-    count_0 = sum(1 for prediction in predictions if prediction == 0)
-    # Print the counts
-    print(f"0 VS 1: ({count_0}, {count_1})")
+    training_count_1 = sum(1 for prediction in train_prediction if prediction == 1)
+    training_count_0 = sum(1 for prediction in train_prediction if prediction == 0)
+
+    print(f"0 VS 1: ({training_count_0}, {training_count_1})")
+
+    print(f"-- Accuracy test: {np.mean(Y_test == test_prediction)} ")
+    # Count occurrences of 1s and 0s
+    test_count_1 = sum(1 for prediction in test_prediction if prediction == 1)
+    test_count_0 = sum(1 for prediction in test_prediction if prediction == 0)
+    print(f"0 VS 1: ({test_count_0}, {test_count_1})")
+    print("")
+
 stop_training = time()
 print(f"Time: {stop_training - start_training}")
 
