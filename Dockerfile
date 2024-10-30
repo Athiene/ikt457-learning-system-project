@@ -16,3 +16,6 @@ COPY createData.py .
 
 # Expose the port the app runs on
 EXPOSE 8050
+
+# Keep the container running for interactive use
+CMD ["tail", "-f", "/dev/null"]
