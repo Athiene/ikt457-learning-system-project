@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  hex_game_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8050:8050"
+    tty: true  

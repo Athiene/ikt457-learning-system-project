@@ -1,24 +1,27 @@
-from GraphTsetlinMachine.graphs import Graphs
-from scipy.sparse import csr_matrix
+import csv
 import argparse
-from HexGame import game
-from time import time
+from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 import numpy as np
+from time import time
+from createData import createCSV
+import os.path
+import random
+from sklearn.model_selection import train_test_split
 
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=200, type=int)
-    parser.add_argument("--T", default=400, type=int)
+    parser.add_argument("--number-of-clauses", default=600, type=int)
+    parser.add_argument("--T", default=800, type=int)
     parser.add_argument("--s", default=1.2, type=float)
     parser.add_argument("--depth", default=6, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=512, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
-    parser.add_argument("--number-of-examples", default=1000, type=int)
+    parser.add_argument("--number-of-examples", default=50000, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
     parser.add_argument("--max-included-literals", default=16, type=int)
 
@@ -36,124 +39,191 @@ def fetch_labels(labels):
             int_labels = np.append(int_labels, 0)
         elif labels[index][0] == 'Blue':
             int_labels = np.append(int_labels, 1)
-    # print(int_labels)
     return int_labels
 
 
-def print_gameboards(simulations, gameboard_size):
-    for game_index, simulation in enumerate(simulations):
-        print(f"Game {game_index + 1}:")
-
-        # Create a new game object with the same board size
-        newGame_ = game.Game(gameboard_size)
-
-        # Populate the game object with the simulated features and edges
-        newGame_.CellNodesFeatureList = simulation[1]  # Load the feature list
-        newGame_.CellNodesEdgeList = simulation[2]  # Load the edge list
-
-        # Print the current game state
-        newGame_.print_hex_diagram()
+def read_from_csv(filename):
+    simulations = []
+    with open(filename, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            winner = int(row['winner'])
+            features = eval(row['feature'])
+            edges = eval(row['edges'])
+            simulations.append([winner, features, edges])
+    return simulations
 
 
 args = default_args()
-gameboard_size = 6
+gameboard_size = 13
+csvName = "13x13_set"
 
-################## CREATING TRAINING DATA #####################
+if os.path.isfile(csvName + ".csv"):
+    print("FILE ALREADY EXISTS")
 
-print("Creating training data")
+if not os.path.isfile(csvName + ".csv"):
+    createCSV(board_size=3, examples=args.number_of_examples, goBack=0, CSVname=csvName)
 
-# Lists that contain all the simulated hex games
-Simulation_Train = [[[], [], [], []] for _ in range(args.number_of_examples)]
+################## READING DATA FROM CSV #####################
 
-graphs_train = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
-                      hypervector_bits=args.hypervector_bits, double_hashing=args.double_hashing, )
-for graph_id in range(args.number_of_examples):
-    # Fetches simulated game of hex
-    newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
-    Simulation_Train[graph_id][0] = winner
-    Simulation_Train[graph_id][1] = featureList
-    Simulation_Train[graph_id][2] = edgeList
-    Simulation_Train[graph_id][3] = maxEdges
-    # Sets the correct amount of nodes in a graph
+print("Reading data from CSV")
+
+# Read training and testing data from CSV files
+simulation_data = read_from_csv(csvName + ".csv")
+
+print("AMOUNT OF DATA GENERATED: ", len(simulation_data))
+
+red_wins = []
+blue_wins = []
+
+# Separate the simulation data into red and blue wins
+for simulation in simulation_data:
+    winner = simulation[0]  # First element represents the winner
+    if winner == 0:  # Red wins
+        red_wins.append(simulation)
+    elif winner == 1:  # Blue wins
+        blue_wins.append(simulation)
+
+print(f"RED VS BLUE WINS: ({len(red_wins)}, {len(blue_wins)})")
+
+# Get the number of red and blue wins
+num_red_wins = len(red_wins)
+num_blue_wins = len(blue_wins)
+
+red_samples = red_wins[:num_blue_wins]
+blue_samples = blue_wins
+
+print(f"RED SAMPLES vs BLUE SAMPLES: ({len(red_samples)}, {len(blue_samples)})")
+
+red_slice = int(0.9 * len(red_samples))
+blue_slice = int(0.9 * len(blue_samples))
+
+train_red_sample = red_samples[:red_slice]
+train_blue_sample = blue_samples[:blue_slice]
+
+test_red_sample = red_samples[red_slice:]
+test_blue_sample = blue_samples[blue_slice:]
+
+# Combine red and blue wins for training and test data
+Simulation_Train = train_red_sample + train_blue_sample
+Simulation_Test = test_red_sample + test_blue_sample
+
+# Shuffle the data to ensure random placement of red and blue wins
+random.shuffle(Simulation_Train)
+random.shuffle(Simulation_Test)
+
+# Print out the amount of data used
+print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
+
+Y = np.array([simulation[0] for simulation in Simulation_Train])
+Y_test = np.array([simulation[0] for simulation in Simulation_Test])
+
+"""
+for i in range(len(Simulation_Test)):
+    print(Simulation_Test[i])
+"""
+
+print("Y: ", Y)
+print("Y_test: ", Y_test)
+
+print(f"Training Data vs Testing Data: ({len(Simulation_Train)},{len(Simulation_Test)}) ")
+print(
+    f"Training Data - Amount RED Wins (Training vs Testing): ({len(np.where(Y == 0)[0])}, {len(np.where(Y == 1)[0])})")
+print(
+    f"Testing Data - Amount BLUE Wins: (Training vs Testing): ({len(np.where(Y_test == 0)[0])}, {len(np.where(Y_test == 1)[0])})")
+
+### TRAINING GRAPH ###
+
+graphs_train = Graphs(
+    len(Simulation_Train),
+    symbols=['R', 'B', 'N'],
+    hypervector_size=args.hypervector_size,
+    hypervector_bits=args.hypervector_bits,
+    double_hashing=args.double_hashing
+)
+
+for graph_id, simulation in enumerate(Simulation_Train):
+    winner, featureList, edgeList = simulation
+    # print(simulation)
     graphs_train.set_number_of_graph_nodes(graph_id, len(featureList))
 
 graphs_train.prepare_node_configuration()
 
-for graph_id in range(args.number_of_examples):
-    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(len(Simulation_Train[graph_id][3])):
-        graphs_train.add_graph_node(graph_id, node_id, Simulation_Train[graph_id][3][node_id])
+for graph_id, simulation in enumerate(Simulation_Train):
+    winner, featureList, edgeList = simulation
+    for node_id in range(len(edgeList)):
+        if edgeList[node_id]:
+            graphs_train.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
 
 graphs_train.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
-for graph_id in range(args.number_of_examples):
-    for node_id in range(len(Simulation_Train[graph_id][2])):
-        if Simulation_Train[graph_id][2][node_id]:
-            for edge in Simulation_Train[graph_id][2][node_id]:
-                graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
+for graph_id, simulation in enumerate(Simulation_Train):
+    winner, featureList, edgeList = simulation
 
-    for node_id in range(len(Simulation_Train[graph_id][2])):
-        if Simulation_Train[graph_id][1][node_id] == 'Red':
+    for node_id in range(len(edgeList)):
+
+        # Add edges for the current node
+        if edgeList[node_id]:  # Check if there are edges for the node
+            for edge in edgeList[node_id]:
+                graphs_train.add_graph_node_edge(graph_id, node_id, edge,
+                                                 0)  # 0 could represent weight or other attribute
+
+        # Add node properties based on features
+        feature = featureList[node_id]  # Get the feature for the current node
+        if feature == 'Red':
             graphs_train.add_graph_node_property(graph_id, node_id, 'R')
-            continue
-        if Simulation_Train[graph_id][1][node_id] == 'Blue':
+        elif feature == 'Blue':
             graphs_train.add_graph_node_property(graph_id, node_id, 'B')
-            continue
-        if Simulation_Train[graph_id][1][node_id] == [None]:
-            graphs_train.add_graph_node_property(graph_id, node_id, 'N')
+        else:
+            graphs_train.add_graph_node_property(graph_id, node_id, 'N')  # Default property
 
 graphs_train.encode()
 
-######### CREATING TESTING DATA #####################
+#### TESTING GRAPH ###
 
-print("Creating testing data")
+graphs_test = Graphs(
+    len(Simulation_Test), init_with=graphs_train
+)
 
-Simulation_Test = [[[], [], [], []] for _ in range(args.number_of_examples)]
-
-graphs_test = Graphs(args.number_of_examples, symbols=['R', 'B', 'N'], hypervector_size=args.hypervector_size,
-                     hypervector_bits=args.hypervector_bits)
-for graph_id in range(args.number_of_examples):
-    # Fetches simulated game of hex
-    newGame_ = game.Game(gameboard_size)
-    winner, featureList, edgeList, maxEdges = newGame_.SimulateGame(goBack=0)
-    Simulation_Test[graph_id][0] = winner
-    Simulation_Test[graph_id][1] = featureList
-    Simulation_Test[graph_id][2] = edgeList
-    Simulation_Test[graph_id][3] = maxEdges
-    # Sets the correct amount of nodes in a graph
+for graph_id, simulation in enumerate(Simulation_Test):
+    winner, featureList, edgeList = simulation
     graphs_test.set_number_of_graph_nodes(graph_id, len(featureList))
 
 graphs_test.prepare_node_configuration()
 
-for graph_id in range(args.number_of_examples):
-    # Sets the correct amount of edges for each node for each graph_id in the tsetlin machine node config
-    for node_id in range(len(Simulation_Test[graph_id][3])):
-        graphs_test.add_graph_node(graph_id, node_id, Simulation_Test[graph_id][3][node_id])
+for graph_id, simulation in enumerate(Simulation_Test):
+    winner, featureList, edgeList = simulation
+    for node_id in range(len(edgeList)):
+        if edgeList[node_id]:
+            graphs_test.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
 
 graphs_test.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
-for graph_id in range(args.number_of_examples):
-    for node_id in range(len(Simulation_Test[graph_id][2])):
-        if Simulation_Test[graph_id][2][node_id]:
-            for edge in Simulation_Test[graph_id][2][node_id]:
-                graphs_test.add_graph_node_edge(graph_id, node_id, edge, 0)
+for graph_id, simulation in enumerate(Simulation_Test):
+    winner, featureList, edgeList = simulation
 
-    for node_id in range(len(Simulation_Test[graph_id][2])):
-        if Simulation_Test[graph_id][1][node_id] == 'Red':
+    for node_id in range(len(edgeList)):
+
+        # Add edges for the current node
+        if edgeList[node_id]:  # Check if there are edges for the node
+            for edge in edgeList[node_id]:
+                graphs_test.add_graph_node_edge(graph_id, node_id, edge,
+                                                0)  # 0 could represent weight or other attribute
+
+        # Add node properties based on features
+        feature = featureList[node_id]  # Get the feature for the current node
+        if feature == 'Red':
             graphs_test.add_graph_node_property(graph_id, node_id, 'R')
-            continue
-        if Simulation_Test[graph_id][1][node_id] == 'Blue':
+        elif feature == 'Blue':
             graphs_test.add_graph_node_property(graph_id, node_id, 'B')
-            continue
-        if Simulation_Test[graph_id][1][node_id] == [None]:
-            graphs_test.add_graph_node_property(graph_id, node_id, 'N')
+        else:
+            graphs_test.add_graph_node_property(graph_id, node_id, 'N')  # Default property
 
 graphs_test.encode()
 
-############### PREDUICTION ###############
+### PREDICTION ####
 
 # Train the Tsetlin Machine
 tm = MultiClassGraphTsetlinMachine(
@@ -164,15 +234,47 @@ tm = MultiClassGraphTsetlinMachine(
     message_size=args.message_size,
     message_bits=args.message_bits,
     max_included_literals=args.max_included_literals,
+    grid=(16 * 13, 1, 1),
+    block=(128, 1, 1)
 )
 
 start_training = time()
 for i in range(args.epochs):
-    tm.fit(graphs_train, fetch_labels(Simulation_Train), epochs=1, incremental=True)
-    print(f"Epoch#{i + 1} -- Accuracy train: {np.mean(fetch_labels(Simulation_Train) == tm.predict(graphs_train))}",
+    tm.fit(graphs_train, Y, epochs=1, incremental=True)
+
+    train_prediction = tm.predict(graphs_train)
+    test_prediction = tm.predict(graphs_test)
+    print(f"Epoch#{i + 1}")
+    print(f"-- Accuracy train: {np.mean(Y == train_prediction)}",
           end=' ')
-    print(f"-- Accuracy test: {np.mean(fetch_labels(Simulation_Test) == tm.predict(graphs_test))} ")
+    print("")
+    # Count occurrences of 1s and 0s
+    training_count_1 = sum(1 for prediction in train_prediction if prediction == 1)
+    training_count_0 = sum(1 for prediction in train_prediction if prediction == 0)
+
+    print(f"0 VS 1: ({training_count_0}, {training_count_1})")
+
+    print(f"-- Accuracy test: {np.mean(Y_test == test_prediction)} ")
+    # Count occurrences of 1s and 0s
+    test_count_1 = sum(1 for prediction in test_prediction if prediction == 1)
+    test_count_0 = sum(1 for prediction in test_prediction if prediction == 0)
+    print(f"0 VS 1: ({test_count_0}, {test_count_1})")
+    print("")
+
 stop_training = time()
 print(f"Time: {stop_training - start_training}")
 
 weights = tm.get_state()[1].reshape(2, -1)
+
+for i in range(tm.number_of_clauses):
+    print("Clause #%d W:(%d %d)" % (i, weights[0, i], weights[1, i]), end=' ')
+    l = []
+    for k in range(args.hypervector_size * 2):
+        if tm.ta_action(0, i, k):
+            if k < args.hypervector_size:
+                l.append("x%d" % (k))
+            else:
+                l.append("NOT x%d" % (k - args.hypervector_size))
+    print(" AND ".join(l))
+    print(f"Number of literals: {len(l)}")
+
