@@ -4,7 +4,6 @@ from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 import numpy as np
 from time import time
-from createData import createCSV
 import os.path
 import random
 from sklearn.model_selection import train_test_split
@@ -13,10 +12,10 @@ from sklearn.model_selection import train_test_split
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=600, type=int)
-    parser.add_argument("--T", default=800, type=int)
+    parser.add_argument("--number-of-clauses", default=800, type=int)
+    parser.add_argument("--T", default=400, type=int)
     parser.add_argument("--s", default=1.2, type=float)
-    parser.add_argument("--depth", default=6, type=int)
+    parser.add_argument("--depth", default=12, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=512, type=int)
@@ -55,62 +54,20 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 13
+gameboard_size = 3
 csvName = "13x13_set"
-
-if os.path.isfile(csvName + ".csv"):
-    print("FILE ALREADY EXISTS")
-
-if not os.path.isfile(csvName + ".csv"):
-    createCSV(board_size=3, examples=args.number_of_examples, goBack=0, CSVname=csvName)
 
 ################## READING DATA FROM CSV #####################
 
 print("Reading data from CSV")
 
 # Read training and testing data from CSV files
-simulation_data = read_from_csv(csvName + ".csv")
-
-print("AMOUNT OF DATA GENERATED: ", len(simulation_data))
-
-red_wins = []
-blue_wins = []
-
-# Separate the simulation data into red and blue wins
-for simulation in simulation_data:
-    winner = simulation[0]  # First element represents the winner
-    if winner == 0:  # Red wins
-        red_wins.append(simulation)
-    elif winner == 1:  # Blue wins
-        blue_wins.append(simulation)
-
-print(f"RED VS BLUE WINS: ({len(red_wins)}, {len(blue_wins)})")
-
-# Get the number of red and blue wins
-num_red_wins = len(red_wins)
-num_blue_wins = len(blue_wins)
-
-red_samples = red_wins[:num_blue_wins]
-blue_samples = blue_wins
-
-print(f"RED SAMPLES vs BLUE SAMPLES: ({len(red_samples)}, {len(blue_samples)})")
-
-red_slice = int(0.9 * len(red_samples))
-blue_slice = int(0.9 * len(blue_samples))
-
-train_red_sample = red_samples[:red_slice]
-train_blue_sample = blue_samples[:blue_slice]
-
-test_red_sample = red_samples[red_slice:]
-test_blue_sample = blue_samples[blue_slice:]
+data_test = read_from_csv(csvName + "_test_data.csv")
+data_training = read_from_csv(csvName + "_training_data.csv")
 
 # Combine red and blue wins for training and test data
-Simulation_Train = train_red_sample + train_blue_sample
-Simulation_Test = test_red_sample + test_blue_sample
-
-# Shuffle the data to ensure random placement of red and blue wins
-random.shuffle(Simulation_Train)
-random.shuffle(Simulation_Test)
+Simulation_Test = data_test
+Simulation_Train = data_training
 
 # Print out the amount of data used
 print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
@@ -118,10 +75,6 @@ print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
 Y = np.array([simulation[0] for simulation in Simulation_Train])
 Y_test = np.array([simulation[0] for simulation in Simulation_Test])
 
-"""
-for i in range(len(Simulation_Test)):
-    print(Simulation_Test[i])
-"""
 
 print("Y: ", Y)
 print("Y_test: ", Y_test)

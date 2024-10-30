@@ -5,7 +5,7 @@ class Game:
     # On initilize
     def __init__(self, size):
         self.board_size = size
-        self.Player1 = True
+        self.Player1 = random.choice([True, False])
         self.Winner = None
 
         # Create an array containing arrays
@@ -187,7 +187,10 @@ class Game:
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "1" or winner == "0":
-            # print(f"{winner} has won the game!")
+            if winner == "1":
+                print(f"Blue has won the game!")
+            else:
+                print(f"Red has won the game!")
             return winner
 
         return None
@@ -200,9 +203,10 @@ class Game:
             # Indent every other row for the hex effect
             indent = ' ' * i
             row = self.CellNodesFeatureList[i * self.board_size:(i + 1) * self.board_size]
-            # Format the row for display
-            formatted_row = ' '.join([str(cell[0]) if cell[0] else '.' for cell in row])
+            # Format the row for display, replacing "None" with "*"
+            formatted_row = ' '.join([str(cell[0]) if cell != "None" else '*' for cell in row])
             print(f"{indent}{formatted_row}")
+
 
     def print_overview(self):
         print()
@@ -259,11 +263,13 @@ class Game:
     def SimulateGame(self, goBack):
         condition = True
         while condition:
-            self.Winner = self.makeMove(False, self.RandomAvailableCell())
+            self.Winner = self.makeMove(True, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        # self.print_overview()
+        self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges
 
 
+game = Game(6)
+game.SimulateGame(0)
