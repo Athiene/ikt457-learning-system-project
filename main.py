@@ -55,7 +55,7 @@ def read_from_csv(filename):
 
 args = default_args()
 gameboard_size = 3
-csvName = "13x13_set"
+csvName = "3x3_set"
 
 ################## READING DATA FROM CSV #####################
 

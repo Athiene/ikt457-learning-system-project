@@ -47,9 +47,9 @@ def filterData(simulation_data):
     # Separate the simulation data into red and blue wins
     for simulation in simulation_data:
         winner = simulation[0]  # First element represents the winner
-        if winner == 0:  # Red wins
+        if winner == "0":  # Red wins
             red_wins.append(simulation)
-        elif winner == 1:  # Blue wins
+        elif winner == "1":  # Blue wins
             blue_wins.append(simulation)
     
     print(f"RED VS BLUE WINS: ({len(red_wins)}, {len(blue_wins)})")
@@ -83,8 +83,9 @@ def filterData(simulation_data):
     # Print out the amount of data used
     print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
     
-    Y = np.array([simulation[0] for simulation in Simulation_Train])
-    Y_test = np.array([simulation[0] for simulation in Simulation_Test])
+    # Convert '0' and '1' strings to integers in Y and Y_test
+    Y = np.array([int(simulation[0]) for simulation in Simulation_Train])
+    Y_test = np.array([int(simulation[0]) for simulation in Simulation_Test])
 
     print(f"Training Data vs Testing Data: ({len(Simulation_Train)},{len(Simulation_Test)}) ")
     print(
@@ -93,21 +94,41 @@ def filterData(simulation_data):
         f"Testing Data - Amount BLUE Wins: (Training vs Testing): ({len(np.where(Y_test == 0)[0])}, {len(np.where(Y_test == 1)[0])})")
     return Simulation_Test, Simulation_Train
 
+def fetch_simulation_games(number, gameboard_size, goBack):
+    red_data = []  # List to collect "Red" results
+    blue_data = []  # List to collect "Blue" results
 
-gameboard_size = 3
-csvName = "3x3_set"
-number_of_examples = 5000
-simulation_data = []
+    while len(red_data) < number or len(blue_data) < number:
+        new_game = game.Game(gameboard_size)
+        winner, feature, edges = new_game.SimulateGame(goBack)
 
-if not os.path.isfile(csvName + ".csv"):
-    createCSV(board_size=gameboard_size, examples=number_of_examples, goBack=0, CSVname=csvName)
-    print("Created dataset!")
-else:
-    data = read_from_csv(csvName + ".csv")
-    test_data, training_data = filterData(simulation_data=data)
-    createCSV_noSimulation(test_data, csvName+"_test_data")
-    createCSV_noSimulation(training_data, csvName+"_training_data")
-    print("Filtered dataset!")
+        # Check if winner is Red or Blue
+        if winner == "0" and len(red_data) < number:
+            red_data.append((winner, feature, edges))  # Append red results
+        elif winner == "1" and len(blue_data) < number:
+            blue_data.append((winner, feature, edges))  # Append blue results
+
+    return red_data+blue_data
+
+
+gameboard_size = 13
+csvName = "13x13_set"
+number_of_examples = 10000
+
+if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_training_data.csv"):
+    print("Dataset with the same name already exists!")
+    print("Exiting...")
+    exit()
+
+data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=0)
+print(data)
+test_data, training_data = filterData(simulation_data=data)
+createCSV_noSimulation(test_data, csvName+"_test_data")
+createCSV_noSimulation(training_data, csvName+"_training_data")
+print("Created dataset!")
+
+
+
     
     
 

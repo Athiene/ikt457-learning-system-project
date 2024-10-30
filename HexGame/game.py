@@ -180,17 +180,19 @@ class Game:
         # Checks if the move made creates any connections
         self.connectionCheck(index)
 
-        if option == True:
+        #if option == True:
             # Print current hex diagram
-            self.print_hex_diagram()
+            #self.print_hex_diagram()
 
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "1" or winner == "0":
+            """
             if winner == "1":
                 print(f"Blue has won the game!")
             else:
                 print(f"Red has won the game!")
+            """
             return winner
 
         return None
@@ -266,10 +268,6 @@ class Game:
             self.Winner = self.makeMove(True, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        self.print_overview()
+        #self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges
-
-
-game = Game(6)
-game.SimulateGame(0)
