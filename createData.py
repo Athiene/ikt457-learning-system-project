@@ -115,6 +115,7 @@ gameboard_size = 13
 csvName = "13x13_set"
 number_of_examples = 10000
 
+"""
 if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_training_data.csv"):
     print("Dataset with the same name already exists!")
     print("Exiting...")
@@ -127,7 +128,13 @@ createCSV_noSimulation(test_data, csvName+"_test_data")
 createCSV_noSimulation(training_data, csvName+"_training_data")
 print("Created dataset!")
 
+"""
 
+data = createCSV(board_size=gameboard_size, examples=number_of_examples, goBack=0, csvName=csvName)
+test_data, training_data = filterData(simulation_data=data)
+createCSV_noSimulation(test_data, csvName+"_test_data")
+createCSV_noSimulation(training_data, csvName+"_training_data")
+print("Created dataset!")
 
     
     
