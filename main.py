@@ -12,10 +12,10 @@ from sklearn.model_selection import train_test_split
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=800, type=int)
+    parser.add_argument("--number-of-clauses", default=200, type=int)
     parser.add_argument("--T", default=400, type=int)
     parser.add_argument("--s", default=1.2, type=float)
-    parser.add_argument("--depth", default=12, type=int)
+    parser.add_argument("--depth", default=6, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=512, type=int)
@@ -89,7 +89,7 @@ print(
 
 graphs_train = Graphs(
     len(Simulation_Train),
-    symbols=['R', 'B', 'N'],
+    symbols=['X', 'O', '*'],
     hypervector_size=args.hypervector_size,
     hypervector_bits=args.hypervector_bits,
     double_hashing=args.double_hashing
@@ -119,17 +119,16 @@ for graph_id, simulation in enumerate(Simulation_Train):
         # Add edges for the current node
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
-                graphs_train.add_graph_node_edge(graph_id, node_id, edge,
-                                                 0)  # 0 could represent weight or other attribute
+                graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
 
         # Add node properties based on features
         feature = featureList[node_id]  # Get the feature for the current node
         if feature == 'Red':
-            graphs_train.add_graph_node_property(graph_id, node_id, 'R')
+            graphs_train.add_graph_node_property(graph_id, node_id, 'X')
         elif feature == 'Blue':
-            graphs_train.add_graph_node_property(graph_id, node_id, 'B')
+            graphs_train.add_graph_node_property(graph_id, node_id, 'O')
         else:
-            graphs_train.add_graph_node_property(graph_id, node_id, 'N')  # Default property
+            graphs_train.add_graph_node_property(graph_id, node_id, '*')  
 
 graphs_train.encode()
 
@@ -162,17 +161,16 @@ for graph_id, simulation in enumerate(Simulation_Test):
         # Add edges for the current node
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
-                graphs_test.add_graph_node_edge(graph_id, node_id, edge,
-                                                0)  # 0 could represent weight or other attribute
+                graphs_test.add_graph_node_edge(graph_id, node_id, edge, 0)
 
         # Add node properties based on features
         feature = featureList[node_id]  # Get the feature for the current node
         if feature == 'Red':
-            graphs_test.add_graph_node_property(graph_id, node_id, 'R')
+            graphs_test.add_graph_node_property(graph_id, node_id, 'X')
         elif feature == 'Blue':
-            graphs_test.add_graph_node_property(graph_id, node_id, 'B')
+            graphs_test.add_graph_node_property(graph_id, node_id, 'O')
         else:
-            graphs_test.add_graph_node_property(graph_id, node_id, 'N')  # Default property
+            graphs_test.add_graph_node_property(graph_id, node_id, '*')  # Default property
 
 graphs_test.encode()
 
@@ -195,6 +193,7 @@ start_training = time()
 for i in range(args.epochs):
     tm.fit(graphs_train, Y, epochs=1, incremental=True)
 
+    start_training_epoch = time()
     train_prediction = tm.predict(graphs_train)
     test_prediction = tm.predict(graphs_test)
     print(f"Epoch#{i + 1}")
@@ -212,11 +211,14 @@ for i in range(args.epochs):
     test_count_1 = sum(1 for prediction in test_prediction if prediction == 1)
     test_count_0 = sum(1 for prediction in test_prediction if prediction == 0)
     print(f"0 VS 1: ({test_count_0}, {test_count_1})")
+    stop_training_epoch = time()
+    print(f"Epoch Time: {stop_training_epoch-start_training_epoch}")
     print("")
 
 stop_training = time()
 print(f"Time: {stop_training - start_training}")
 
+"""
 weights = tm.get_state()[1].reshape(2, -1)
 
 for i in range(tm.number_of_clauses):
@@ -230,4 +232,5 @@ for i in range(tm.number_of_clauses):
                 l.append("NOT x%d" % (k - args.hypervector_size))
     print(" AND ".join(l))
     print(f"Number of literals: {len(l)}")
+"""
 

@@ -111,31 +111,47 @@ def fetch_simulation_games(number, gameboard_size, goBack):
     return red_data+blue_data
 
 
-gameboard_size = 13
-csvName = "13x13_set"
-number_of_examples = 10000
+gameboard_size = 3
+csvName = "3x3_set"
+number_of_examples = 1000
 
-"""
+
 if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_training_data.csv"):
     print("Dataset with the same name already exists!")
     print("Exiting...")
     exit()
 
 data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=0)
-print(data)
+createCSV_noSimulation(data, csvName)
 test_data, training_data = filterData(simulation_data=data)
 createCSV_noSimulation(test_data, csvName+"_test_data")
 createCSV_noSimulation(training_data, csvName+"_training_data")
 print("Created dataset!")
 
 """
-
 data = createCSV(board_size=gameboard_size, examples=number_of_examples, goBack=0, csvName=csvName)
 test_data, training_data = filterData(simulation_data=data)
 createCSV_noSimulation(test_data, csvName+"_test_data")
 createCSV_noSimulation(training_data, csvName+"_training_data")
 print("Created dataset!")
 
+
+import csv
+from HexGame import game
+
+def createCSV(board_size, examples, goBack, CSVname):
+    with open(CSVname+".csv", 'w', newline='') as file:
+        writer = csv.writer(file)
+        field = ["winner", "feature", "edges"]
+        writer.writerow(field)
+
+        for i in range(examples):
+            new_game = game.Game(board_size)
+            winner, feature, edges = new_game.SimulateGame(goBack)
+            writer.writerow([winner, feature, edges])
+
+
+"""
     
     
 
