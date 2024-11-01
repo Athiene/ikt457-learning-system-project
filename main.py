@@ -11,18 +11,18 @@ from sklearn.model_selection import train_test_split
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=100, type=int)
-    parser.add_argument("--number-of-clauses", default=200, type=int)
-    parser.add_argument("--T", default=400, type=int)
-    parser.add_argument("--s", default=1.2, type=float)
-    parser.add_argument("--depth", default=6, type=int)
-    parser.add_argument("--hypervector-size", default=512, type=int)
+    parser.add_argument("--epochs", default=250, type=int)
+    parser.add_argument("--number-of-clauses", default=1, type=int)
+    parser.add_argument("--T", default=1000, type=int)
+    parser.add_argument("--s", default=1, type=float)
+    parser.add_argument("--depth", default=16, type=int)
+    parser.add_argument("--hypervector-size", default=1024, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
-    parser.add_argument("--message-size", default=512, type=int)
+    parser.add_argument("--message-size", default=1024, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--number-of-examples", default=50000, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
-    parser.add_argument("--max-included-literals", default=16, type=int)
+    parser.add_argument("--max-included-literals", default=20, type=int)
 
     args = parser.parse_args()
     for key, value in kwargs.items():
@@ -54,8 +54,8 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 3
-csvName = "3x3_set"
+gameboard_size = 6
+csvName = "6x6_set"
 
 ################## READING DATA FROM CSV #####################
 
@@ -115,11 +115,13 @@ for graph_id, simulation in enumerate(Simulation_Train):
     winner, featureList, edgeList = simulation
 
     for node_id in range(len(edgeList)):
-
         # Add edges for the current node
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
-                graphs_train.add_graph_node_edge(graph_id, node_id, edge, 0)
+                if featureList[node_id] == featureList[edge]:
+                    graphs_train.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Connected")
+                else:
+                    graphs_train.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Not Connected")
 
         # Add node properties based on features
         feature = featureList[node_id]  # Get the feature for the current node
@@ -161,7 +163,10 @@ for graph_id, simulation in enumerate(Simulation_Test):
         # Add edges for the current node
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
-                graphs_test.add_graph_node_edge(graph_id, node_id, edge, 0)
+                if featureList[node_id] == featureList[edge]:
+                    graphs_test.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Connected")
+                else:
+                    graphs_test.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Not Connected")
 
         # Add node properties based on features
         feature = featureList[node_id]  # Get the feature for the current node
@@ -191,9 +196,8 @@ tm = MultiClassGraphTsetlinMachine(
 
 start_training = time()
 for i in range(args.epochs):
-    tm.fit(graphs_train, Y, epochs=1, incremental=True)
-
     start_training_epoch = time()
+    tm.fit(graphs_train, Y, epochs=1, incremental=True)
     train_prediction = tm.predict(graphs_train)
     test_prediction = tm.predict(graphs_test)
     print(f"Epoch#{i + 1}")
@@ -217,6 +221,8 @@ for i in range(args.epochs):
 
 stop_training = time()
 print(f"Time: {stop_training - start_training}")
+
+
 
 """
 weights = tm.get_state()[1].reshape(2, -1)
