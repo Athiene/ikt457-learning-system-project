@@ -100,7 +100,7 @@ def filterData(simulation_data):
         f"Testing Data - Amount BLUE Wins: (Training vs Testing): ({len(np.where(Y_test == 0)[0])}, {len(np.where(Y_test == 1)[0])})")
     return Simulation_Test, Simulation_Train
 
-def fetch_simulation_games(number, gameboard_size, goBack, noDuplicates):
+def fetch_simulation_games(number, gameboard_size, goBack, noDuplicates, randomMoves):
     red_data = []  # List to collect "Red" results
     blue_data = []  # List to collect "Blue" results
     existing_games = set()
@@ -108,7 +108,7 @@ def fetch_simulation_games(number, gameboard_size, goBack, noDuplicates):
 
     while len(red_data) < number or len(blue_data) < number:
         new_game = game.Game(gameboard_size)
-        winner, feature, edges = new_game.SimulateGame(goBack)
+        winner, feature, edges = new_game.SimulateGame(goBack, randomMoves)
 
         # Create a unique key for the game based on its features and edges
         game_key = (winner, tuple(feature))
@@ -138,9 +138,15 @@ def fetch_simulation_games(number, gameboard_size, goBack, noDuplicates):
     return red_data + blue_data
 
 
+#
+# PARAMETERS
+#
 gameboard_size = 3
-csvName = "3x3_set"
+csvName = "3x3_goBack2_set"
 number_of_examples = 2000
+go_back=2
+no_duplicates = False
+random_moves = True
 
 
 if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_training_data.csv"):
@@ -148,7 +154,7 @@ if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_trai
     print("Exiting...")
     exit()
 
-data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=0, noDuplicates=False)
+data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=go_back, noDuplicates=no_duplicates, randomMoves=random_moves)
 createCSV_noSimulation(data, csvName)
 test_data, training_data = filterData(simulation_data=data)
 createCSV_noSimulation(test_data, csvName+"_test_data")

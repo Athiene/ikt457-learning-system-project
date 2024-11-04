@@ -1,5 +1,5 @@
 import random
-from bridge_pattern import BP
+from .bridge_pattern import BP
 
 class Game:
 
