@@ -1,28 +1,30 @@
 import csv
 import argparse
-from GraphTsetlinMachine.graphs import Graphs
-from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
+import sys
+import os 
 import numpy as np
 from time import time
-import os.path
 import random
 from sklearn.model_selection import train_test_split
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from GraphTsetlinMachine.graphs import Graphs
+from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=250, type=int)
-    parser.add_argument("--number-of-clauses", default=1, type=int)
-    parser.add_argument("--T", default=1000, type=int)
-    parser.add_argument("--s", default=1, type=float)
-    parser.add_argument("--depth", default=16, type=int)
+    parser.add_argument("--epochs", default=200, type=int)
+    parser.add_argument("--number-of-clauses", default=20000, type=int)
+    parser.add_argument("--T", default=10000, type=int)
+    parser.add_argument("--s", default=10, type=float)
+    parser.add_argument("--depth", default=12, type=int)
     parser.add_argument("--hypervector-size", default=1024, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
     parser.add_argument("--message-size", default=1024, type=int)
     parser.add_argument("--message-bits", default=2, type=int)
     parser.add_argument("--number-of-examples", default=50000, type=int)
     parser.add_argument('--double-hashing', dest='double_hashing', default=False, action='store_true')
-    parser.add_argument("--max-included-literals", default=20, type=int)
+    parser.add_argument("--max-included-literals", default=200, type=int)
 
     args = parser.parse_args()
     for key, value in kwargs.items():
@@ -54,8 +56,8 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 6
-csvName = "6x6_set"
+gameboard_size = 13
+csvName = "13x13_set"
 
 ################## READING DATA FROM CSV #####################
 
@@ -119,9 +121,11 @@ for graph_id, simulation in enumerate(Simulation_Train):
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
                 if featureList[node_id] == featureList[edge]:
+                    #print(f"## CONNECTED ## SOURCE: {featureList[node_id]} -> DESTINATION: {featureList[edge]}")
                     graphs_train.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Connected")
                 else:
                     graphs_train.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Not Connected")
+                    #print(f"## NOT CONNECTED ## SOURCE: {featureList[node_id]} -> DESTINATION: {featureList[edge]}")
 
         # Add node properties based on features
         feature = featureList[node_id]  # Get the feature for the current node
@@ -164,8 +168,10 @@ for graph_id, simulation in enumerate(Simulation_Test):
         if edgeList[node_id]:  # Check if there are edges for the node
             for edge in edgeList[node_id]:
                 if featureList[node_id] == featureList[edge]:
+                    #print(f"## Connected ## SOURCE: {featureList[node_id]} -> DESTINATION: {featureList[edge]}")
                     graphs_test.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Connected")
                 else:
+                    #print(f"## NOT CONNECTED ## SOURCE: {featureList[node_id]} -> DESTINATION: {featureList[edge]}")
                     graphs_test.add_graph_node_edge(graph_id=graph_id, source_node_name=node_id, destination_node_name=edge, edge_type_name="Not Connected")
 
         # Add node properties based on features
@@ -194,33 +200,89 @@ tm = MultiClassGraphTsetlinMachine(
     block=(128, 1, 1)
 )
 
+# Lists to store the times and accuracies
+time_training_epochs = []
+time_testing_epochs = []
+accuracy_train_epochs = []
+accuracy_test_epochs = []
+prediction_distribution_train = []
+prediction_distribution_test = []
+
 start_training = time()
 for i in range(args.epochs):
     start_training_epoch = time()
+    
+    # Train the model for one epoch
     tm.fit(graphs_train, Y, epochs=1, incremental=True)
+    
+    # Record the training time
+    stop_training_epoch = time()
+    training_time = stop_training_epoch - start_training_epoch
+    time_training_epochs.append(training_time)
+    
+    # Get training predictions
     train_prediction = tm.predict(graphs_train)
-    test_prediction = tm.predict(graphs_test)
-    print(f"Epoch#{i + 1}")
-    print(f"-- Accuracy train: {np.mean(Y == train_prediction)}",
-          end=' ')
-    print("")
-    # Count occurrences of 1s and 0s
+    
+    # Calculate training accuracy
+    accuracy_train = np.mean(Y == train_prediction)
+    accuracy_train_epochs.append(accuracy_train)
+    
+    # Count occurrences of 1s and 0s in training predictions
     training_count_1 = sum(1 for prediction in train_prediction if prediction == 1)
     training_count_0 = sum(1 for prediction in train_prediction if prediction == 0)
+    prediction_distribution_train.append((training_count_0, training_count_1))
 
-    print(f"0 VS 1: ({training_count_0}, {training_count_1})")
-
-    print(f"-- Accuracy test: {np.mean(Y_test == test_prediction)} ")
-    # Count occurrences of 1s and 0s
+    # Record the testing time
+    start_testing_epoch = time()
+    
+    # Get testing predictions
+    test_prediction = tm.predict(graphs_test)
+    
+    stop_testing_epoch = time()
+    testing_time = stop_testing_epoch - start_testing_epoch
+    time_testing_epochs.append(testing_time)
+    
+    # Calculate testing accuracy
+    accuracy_test = np.mean(Y_test == test_prediction)
+    accuracy_test_epochs.append(accuracy_test)
+    
+    # Count occurrences of 1s and 0s in testing predictions
     test_count_1 = sum(1 for prediction in test_prediction if prediction == 1)
     test_count_0 = sum(1 for prediction in test_prediction if prediction == 0)
-    print(f"0 VS 1: ({test_count_0}, {test_count_1})")
-    stop_training_epoch = time()
-    print(f"Epoch Time: {stop_training_epoch-start_training_epoch}")
+    prediction_distribution_test.append((test_count_0, test_count_1))
+
+    # Print epoch details
+    print(f"Epoch#{i + 1}")
+    print(f"-- Accuracy train: {accuracy_train}")
+    print(f"0 VS 1 (Train): ({training_count_0}, {training_count_1})")
+    print(f"-- Accuracy test: {accuracy_test}")
+    print(f"0 VS 1 (Test): ({test_count_0}, {test_count_1})")
+    print(f"Training Time: {training_time}")
+    print(f"Testing Time: {testing_time}")
     print("")
 
 stop_training = time()
-print(f"Time: {stop_training - start_training}")
+total_time = stop_training - start_training
+print(f"Total Training Time: {total_time}")
+
+# Calculate and print averages
+avg_training_time = np.mean(time_training_epochs)
+avg_testing_time = np.mean(time_testing_epochs)
+avg_accuracy_train = np.mean(accuracy_train_epochs)
+avg_accuracy_test = np.mean(accuracy_test_epochs)
+
+print("\nAverages:")
+print(f"Average Training Time per Epoch: {avg_training_time}")
+print(f"Average Testing Time per Epoch: {avg_testing_time}")
+print(f"Average Training Accuracy: {avg_accuracy_train}")
+print(f"Average Testing Accuracy: {avg_accuracy_test}")
+
+hs_accuracy_test = max(accuracy_test_epochs)
+hs_accuracy_train = max(accuracy_train_epochs)
+
+print("\nBest values:")
+print(f"Highest Testing Accuracy: {hs_accuracy_test}")
+print(f"Highest Training Accuracy: {hs_accuracy_train}")
 
 
 

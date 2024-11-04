@@ -10,9 +10,8 @@ COPY requirements.txt .
 # Install the necessary packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+COPY Simulations/ . 
 COPY HexGame/game.py .
-COPY createData.py .
 
 # Expose the port the app runs on
 EXPOSE 8050
