@@ -1,3 +1,5 @@
+from random import choice
+
 
 class BP:
 
@@ -17,6 +19,7 @@ class BP:
         self.CellNodesEdgeList = cell_nodes_edge_list
 
 
+
         # Array that contains a moves done
         self.MoveList = move_list
 
@@ -29,6 +32,8 @@ class BP:
 
         return
 
+
+
     def get_next_move(self):
         index = None
 
@@ -39,9 +44,13 @@ class BP:
 
         # Set the current position to the opponent's last move
         current_position = self.MoveList[-2]
+        playerColor = self.CellNodesFeatureList[current_position]
 
-        print(f"Current Position: {current_position}")
+        print(f"Current Position: {current_position} for {playerColor} ")
 
+        index = self.evalute_bridge()
+
+        """
         # Step 1: Detect possible bridges for the current position
         self.detect_bridge(current_position)
 
@@ -53,9 +62,65 @@ class BP:
         if bridge_patterns:
             # Find and set the highest index from the list of possible bridges
             index = max(bridge_patterns)
+        """
+
 
         # Return the highest index as the next move, or None if no bridges are available
         return index
+
+
+
+    def evalute_bridge(self):
+
+        index = None
+
+        current_position = self.MoveList[-2]
+
+        self.detect_bridge(current_position)
+        bridge_patterns = self.PossibleBridgesList[current_position]
+
+        print(f"Bridge Patterns for {current_position}: {bridge_patterns}")
+
+        if bridge_patterns:
+            if self.CellNodesFeatureList[current_position] == "Red":
+
+                # Distance of detected bp from current position
+                distances = [(x, abs(x - current_position)) for x in bridge_patterns]
+
+                # Find the longest distance from current position regardless of if its over or under the current
+                max_distance = max(distances, key=lambda x: x[1])[1]
+
+                # Get all bridge patterns that are at the maximum distance
+
+                farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
+
+                # Randomly select between the highest and lowest of the farthest patterns
+                index = choice([max(farthest_patterns)])
+                print(f"Red selected farthest index: {index}")
+
+
+
+
+            if self.CellNodesFeatureList[current_position] == "Blue":
+
+                # Minimum distance to current_position
+                min_distance = min(abs(x - current_position) for x in bridge_patterns)
+
+                # Al bp that are minimum positions
+                closest_patterns = [x for x in bridge_patterns if abs(x - current_position) == min_distance]
+
+                # If multiple patterns are closest, pick one at random
+                index = choice(closest_patterns)
+                print(f"Blue selected index: {index}")
+
+        #When a possible brige pattern index has been used, remove from the PossibleBridgeList
+        for sublist in self.PossibleBridgesList:
+            if index in sublist:
+                sublist.remove(index)
+        print(f"Removed {index} from all sublists in PossibleBridgesList")
+
+        return index
+
 
 
 
@@ -78,29 +143,6 @@ class BP:
                 return True
 
         return False
-
-
-
-    def evalute_bridge(self, index):
-        current_position = self.MoveList[-2]
-        bridge_patterns = self.PossibleBridgesList[current_position]
-
-        best_score = 0
-
-        for bridge in bridge_patterns:
-            score = 0
-
-            # Criterion 1: Proximity to Walls based on player color
-            if self.is_near_wall(bridge):
-                score += 10  # Arbitrary score for being near a wall
-
-
-            if score > best_score:
-                best_score = score
-
-        return None
-
-
 
 
 
@@ -237,6 +279,7 @@ class BP:
                         self.Red_Bp[index].append(bp_bot_left_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_bot_left_index)
+
 
 
 

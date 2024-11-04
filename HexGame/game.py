@@ -278,15 +278,16 @@ class Game:
                 self.Winner = self.makeMove(False, self.RandomAvailableCell())
             else:
                 # Otherwise, get the next move based on bridge patterns
-                print("Attempting to get next move based on bridge patterns")
+                print("Attempting to get next move based on bridge patterns:\n")
                 bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
                 move = bp.get_next_move()
                 print(f"Next Move: {move}")
 
                 if move is None:
                     # Fallback to a random move if no bridge move is available
-                    print("Random Move Selected (No Bridge Move Available)")
-                    self.Winner = self.makeMove(False, self.RandomAvailableCell())
+                    random_index = self.RandomAvailableCell()
+                    print(f"Random Move Selected (No Bridge Move Available) {random_index}")
+                    self.Winner = self.makeMove(False, random_index)
                 else:
                     # Execute the selected bridge move
                     print(f"Making Move at Index: {move}")
