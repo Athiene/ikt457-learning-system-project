@@ -37,18 +37,74 @@ class BP:
 
 
 
+        # Set the current position to the opponent's last move
+        current_position = self.MoveList[-2]
 
-            return None
+        print(f"Current Position: {current_position}")
 
-        
+        # Step 1: Detect possible bridges for the current position
+        self.detect_bridge(current_position)
 
+        # Step 2: Find the highest index from detected bridges
+        bridge_patterns = self.PossibleBridgesList[current_position]
+
+        print(f"Bridge Patterns for {current_position}: {bridge_patterns}")
+
+        if bridge_patterns:
+            # Find and set the highest index from the list of possible bridges
+            index = max(bridge_patterns)
+
+        # Return the highest index as the next move, or None if no bridges are available
+        return index
+
+
+
+    def is_near_wall(self, index):
+        current_position = self.MoveList[-2]
+        playerColor = self.CellNodesFeatureList[current_position]
+
+        if playerColor == "red":
+            # Check if index is on the top or bottom edge for red
+            if index < self.board_size:  # Top edge
+                return True
+            elif index >= self.board_size * (self.board_size - 1):  # Bottom edge
+                return True
+
+        if playerColor == "blue":
+            # Check if index is on the left or right edge for blue
+            if index % self.board_size == 0:  # Left edge
+                return True
+            elif index % self.board_size == (self.board_size - 1):  # Right edge
+                return True
+
+        return False
+
+
+
+    def evalute_bridge(self, index):
+        current_position = self.MoveList[-2]
+        bridge_patterns = self.PossibleBridgesList[current_position]
+
+        best_score = 0
+
+        for bridge in bridge_patterns:
+            score = 0
+
+            # Criterion 1: Proximity to Walls based on player color
+            if self.is_near_wall(bridge):
+                score += 10  # Arbitrary score for being near a wall
+
+
+            if score > best_score:
+                best_score = score
 
         return None
 
 
 
-    def detect_bridge(self, index):
 
+
+    def detect_bridge(self, index):
         playerColor = self.CellNodesFeatureList[index]
         board_size = self.board_size
 
@@ -184,7 +240,5 @@ class BP:
 
 
 
-    def GetNextMove(self):
-        return None
 
 
