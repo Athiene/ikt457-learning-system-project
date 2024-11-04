@@ -1,4 +1,5 @@
 import random
+from bridge_pattern import BP
 
 class Game:
 
@@ -184,6 +185,8 @@ class Game:
             # Print current hex diagram
             self.print_hex_diagram()
 
+        self.print_overview()
+
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "1" or winner == "0":
@@ -191,6 +194,7 @@ class Game:
             return winner
 
         return None
+
 
     def print_hex_diagram(self):
         print()
@@ -201,6 +205,7 @@ class Game:
             indent = ' ' * i
             row = self.CellNodesFeatureList[i * self.board_size:(i + 1) * self.board_size]
             # Format the row for display
+
             formatted_row = ' '.join([str(cell[0]) if cell[0] else '.' for cell in row])
             print(f"{indent}{formatted_row}")
 
@@ -215,6 +220,9 @@ class Game:
         print("Moves done")
         print(self.MoveList)
         print()
+        print("----")
+
+
         self.print_hex_diagram()
 
     def RandomAvailableCell(self):
@@ -254,14 +262,32 @@ class Game:
                 print("Connections: ")
                 print(self.CellNodesEdgeList)
                 print()
+
+
         return
 
-    def SimulateGame(self, goBack):
+    def SimulateGame(self, goBack, randomMoves):
         condition = True
         while condition:
-            self.Winner = self.makeMove(False, self.RandomAvailableCell())
+            if not randomMoves:
+                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
+                move = bp.get_next_move()
+                if move is None:
+                    self.Winner = self.makeMove(False, self.RandomAvailableCell())
+                else:
+                    self.Winner = self.makeMove(False, move)
+            if randomMoves:
+                self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
-        # self.print_overview()
+
+        self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges
+
+
+
+
+game =  Game(6)
+
+game.SimulateGame(0, randomMoves=False)
