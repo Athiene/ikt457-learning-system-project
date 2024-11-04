@@ -185,8 +185,6 @@ class Game:
             # Print current hex diagram
             self.print_hex_diagram()
 
-        self.print_overview()
-
         # Check if there's a winner after the move
         winner = self.winnerCheck()
         if winner == "1" or winner == "0":
@@ -281,13 +279,6 @@ class Game:
             if self.Winner is not None:
                 condition = False
 
-        self.print_overview()
+        #self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges
-
-
-
-
-game =  Game(6)
-
-game.SimulateGame(0, randomMoves=False)
