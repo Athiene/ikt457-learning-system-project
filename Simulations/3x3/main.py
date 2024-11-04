@@ -7,6 +7,7 @@ from time import time
 import random
 from sklearn.model_selection import train_test_split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from Helper import plotting
 from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 
@@ -299,4 +300,6 @@ for i in range(tm.number_of_clauses):
                 l.append("NOT x%d" % (k - args.hypervector_size))
     print(" AND ".join(l))
     print(f"Number of literals: {len(l)}")
+
+plotting.double_plot(values_1=accuracy_train_epochs, values_2=accuracy_test_epochs, x_label="Epoch", y_label="%", title_name="Training & Test Accuracy", file_name="AccuractValues")
 
