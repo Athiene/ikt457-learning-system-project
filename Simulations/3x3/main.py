@@ -14,7 +14,7 @@ from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=50, type=int)
+    parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--number-of-clauses", default=200, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.2, type=float)
@@ -301,5 +301,7 @@ for i in range(tm.number_of_clauses):
     print(" AND ".join(l))
     print(f"Number of literals: {len(l)}")
 
-plotting.double_plot(values_1=accuracy_train_epochs, values_2=accuracy_test_epochs, x_label="Epoch", y_label="%", title_name="Training & Test Accuracy", file_name="AccuractValues")
+plotting.double_plot(values_1=accuracy_train_epochs, values_2=accuracy_test_epochs, x_label="Epoch", y_label="%", title_name="Training & Test Accuracy", file_name="AccuractValues", labels=["Train", "Test"])
+
+plotting.double_plot(values_1=time_training_epochs, values_2=time_testing_epochs, x_label="Epoch", y_label="sec", title_name="Training & Test Time", file_name="TimeValues", labels=["Train", "Test"])
 
