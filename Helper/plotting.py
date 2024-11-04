@@ -7,10 +7,10 @@ def single_plot(values, title_name, x_label, y_label, file_name):
     file_path = os.path.join(current_directory, file_name)
     
     # Check if the file already exists and prompt the user for deletion
-    if os.path.isfile(file_path):
+    if os.path.isfile(file_name+".png"):
         response = input(f"The file '{file_name}' already exists. Do you want to delete it? (y/n): ").strip().lower()
         if response == 'y' or response == 'yes':
-            os.remove(file_path)
+            os.remove(file_name+".png")
             print(f"Deleted existing file '{file_name}'.")
         else:
             print("File not deleted. Exiting function without saving.")
@@ -36,10 +36,10 @@ def double_plot(values_1, values_2, title_name, x_label, y_label, labels, file_n
     file_path = os.path.join(current_directory, file_name)
     
     # Check if the file already exists and prompt the user for deletion
-    if os.path.isfile(file_path):
+    if os.path.isfile(file_name+".png"):
         response = input(f"The file '{file_name}' already exists. Do you want to delete it? (y/n): ").strip().lower()
         if response == 'y' or response=='yes':
-            os.remove(file_path)
+            os.remove(file_name+".png")
             print(f"Deleted existing file '{file_name}'.")
         else:
             print("File not deleted. Exiting function without saving.")
