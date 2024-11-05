@@ -42,8 +42,6 @@ class BP:
         if len(self.MoveList) < 2:
             print("\nGetNextMove: Both players need to make at least one move")
 
-
-
         # Set the current position to the opponent's last move
         current_position = self.MoveList[-2]
         playerColor = self.CellNodesFeatureList[current_position]
@@ -52,9 +50,7 @@ class BP:
 
         index = self.evaluate_bridge()
 
-
-
-
+        self.store_bp_index(index)
 
         """
         # Step 1: Detect possible bridges for the current position
@@ -108,11 +104,7 @@ class BP:
                 index = choice([max(farthest_patterns)])
                 print(f"Red selected farthest index: {index}")
 
-            # Append the index to the sublist at the current position in Red_Bp or Blue_Bp
 
-                print(f"Appending {index} to Red_Bp at position")  # Debug statement
-                self.Red_Bp.append(index)
-                print("Complete Red_Bp:", self.Red_Bp)  # Shows the entire Red_Bp structure
 
             if self.CellNodesFeatureList[current_position] == "Blue":
 
@@ -124,10 +116,6 @@ class BP:
 
                 # If multiple patterns are closest, pick one at random
                 index = choice(closest_patterns)
-                print(f"Blue selected index: {index}")
-                print(f"Appending {index} to Red_Bp at position")  # Debug statement
-                self.Blue_Bp.append(index)
-                print("Complete Red_Bp:", self.Blue_Bp)  # Shows the entire Red_Bp structure
 
         #When a possible brige pattern index has been used, remove from the PossibleBridgeList
         for sublist in self.PossibleBridgesList:
@@ -140,8 +128,22 @@ class BP:
 
 
 
+    def store_bp_index(self, index):
+        current_position = self.MoveList[-2]
+        playerColor = self.CellNodesFeatureList[current_position]
 
 
+        if playerColor == "Red":
+            print(f"Appending {index} to Red_Bp at position")  # Debug statement
+            self.Red_Bp.append(index)
+            print("Complete Red_Bp:", self.Red_Bp)  # Shows the entire Red_Bp structure
+
+
+        if playerColor == "Blue":
+            print(f"Blue selected index: {index}")
+            print(f"Appending {index} to Red_Bp at position")  # Debug statement
+            self.Blue_Bp.append(index)
+            print("Complete Red_Bp:", self.Blue_Bp)  # Shows the entire Red_Bp structure
 
 
     def is_near_wall(self, index):
