@@ -7,13 +7,18 @@ from time import time
 import random
 from sklearn.model_selection import train_test_split
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from Helper import plotting
 from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
+
+gameboard_size = 3
+Go_back = 0
+csvName = f"{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
 
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", default=50, type=int)
+    parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--number-of-clauses", default=200, type=int)
     parser.add_argument("--T", default=200, type=int)
     parser.add_argument("--s", default=1.2, type=float)
@@ -56,8 +61,6 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 3
-csvName = "3x3_1_set"
 
 ################## READING DATA FROM CSV #####################
 
@@ -299,4 +302,8 @@ for i in range(tm.number_of_clauses):
                 l.append("NOT x%d" % (k - args.hypervector_size))
     print(" AND ".join(l))
     print(f"Number of literals: {len(l)}")
+
+plotting.double_plot(values_1=accuracy_train_epochs, values_2=accuracy_test_epochs, x_label="Epoch", y_label="%", title_name="Training & Test Accuracy", file_name=csvName+"AccuractValues", labels=["Train", "Test"])
+
+plotting.double_plot(values_1=time_training_epochs, values_2=time_testing_epochs, x_label="Epoch", y_label="sec", title_name="Training & Test Time", file_name=csvName+"TimeValues", labels=["Train", "Test"])
 

@@ -1,5 +1,5 @@
 import random
-from bridge_pattern import BP
+from .bridge_pattern import BP
 
 class Game:
 
@@ -188,8 +188,6 @@ class Game:
         if option == True:
             # Print current hex diagram
             self.print_hex_diagram()
-
-        self.print_overview()
 
         # Check if there's a winner after the move
         winner = self.winnerCheck()
