@@ -26,6 +26,10 @@ class Game:
         # Array that contains a moves done
         self.MoveList = []
 
+        self.Red_Bp = []
+
+        self.Blue_Bp = []
+
         # Stores the maximum number of edges for each node
         self.maxEdgesPerNode = [0 for _ in range(self.board_size * self.board_size)]
         self.calculateMaxEdges()
@@ -265,20 +269,44 @@ class Game:
         return
 
     def SimulateGame(self, goBack, randomMoves):
+        print("SimulateGame started")  # Debug print to confirm function call
         condition = True
+
         while condition:
-            if not randomMoves:
-                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
-                move = bp.get_next_move()
-                if move is None:
-                    self.Winner = self.makeMove(False, self.RandomAvailableCell())
-                else:
-                    self.Winner = self.makeMove(False, move)
-            if randomMoves:
+            # Check if there are fewer than 2 moves in MoveList
+            if len(self.MoveList) < 2 or randomMoves:
+                # If fewer than 2 moves, or if randomMoves is explicitly set to True, use a random move
+                print("Random Move Mode Enabled (insufficient moves or randomMoves=True)")
                 self.Winner = self.makeMove(False, self.RandomAvailableCell())
+            else:
+                # Otherwise, get the next move based on bridge patterns
+                print("Attempting to get next move based on bridge patterns:\n")
+                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList , self.Red_Bp, self.Blue_Bp)
+                move = bp.get_next_move()
+                print(f"Next Move: {move}")
+
+                if move is None:
+                    # Fallback to a random move if no bridge move is available
+                    random_index = self.RandomAvailableCell()
+                    print(f"Random Move Selected (No Bridge Move Available) {random_index}")
+                    self.Winner = self.makeMove(False, random_index)
+                else:
+                    # Execute the selected bridge move
+                    print(f"Making Move at Index: {move}")
+                    self.Winner = self.makeMove(False, move)
+
+            # Check for a winner to end the loop
             if self.Winner is not None:
+                print(f"Winner Detected: {self.Winner}")
                 condition = False
 
-        #self.print_overview()
+        # Print game summary and reset as needed
+        self.print_overview()
         self.returnTurns(goBack, False)
         return self.Winner, self.CellNodesFeatureList, self.all_edges
+
+
+game =  Game(6)
+
+
+game.SimulateGame(0, randomMoves=False)
