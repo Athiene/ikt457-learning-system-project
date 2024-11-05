@@ -26,6 +26,10 @@ class Game:
         # Array that contains a moves done
         self.MoveList = []
 
+        self.Red_Bp = []
+
+        self.Blue_Bp = []
+
         # Stores the maximum number of edges for each node
         self.maxEdgesPerNode = [0 for _ in range(self.board_size * self.board_size)]
         self.calculateMaxEdges()
@@ -279,7 +283,7 @@ class Game:
             else:
                 # Otherwise, get the next move based on bridge patterns
                 print("Attempting to get next move based on bridge patterns:\n")
-                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
+                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList , self.Red_Bp, self.Blue_Bp)
                 move = bp.get_next_move()
                 print(f"Next Move: {move}")
 

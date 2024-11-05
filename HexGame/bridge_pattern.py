@@ -4,7 +4,7 @@ from random import choice
 class BP:
 
 
-    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, move_list):
+    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, move_list, red_bp, blue_bp):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
@@ -19,16 +19,18 @@ class BP:
         self.CellNodesEdgeList = cell_nodes_edge_list
 
 
-
         # Array that contains a moves done
         self.MoveList = move_list
 
         # Array that contains the possible bridges
         self.PossibleBridgesList = [[] for _ in range(self.board_size * self.board_size)]
 
-        self.Red_Bp = [[] for _ in range(self.board_size * self.board_size)]
+        # Initialize Red_Bp and Blue_Bp as lists of lists
+        self.Red_Bp = red_bp
 
-        self.Blue_Bp = [[] for _ in range(self.board_size * self.board_size)]
+        self.Blue_Bp = blue_bp
+
+
 
         return
 
@@ -48,7 +50,11 @@ class BP:
 
         print(f"Current Position: {current_position} for {playerColor} ")
 
-        index = self.evalute_bridge()
+        index = self.evaluate_bridge()
+
+
+
+
 
         """
         # Step 1: Detect possible bridges for the current position
@@ -70,7 +76,11 @@ class BP:
 
 
 
-    def evalute_bridge(self):
+
+
+    #This function evaluates all the detected bridges and chooses the best one for the specified color
+
+    def evaluate_bridge(self):
 
         index = None
 
@@ -98,8 +108,11 @@ class BP:
                 index = choice([max(farthest_patterns)])
                 print(f"Red selected farthest index: {index}")
 
+            # Append the index to the sublist at the current position in Red_Bp or Blue_Bp
 
-
+                print(f"Appending {index} to Red_Bp at position")  # Debug statement
+                self.Red_Bp.append(index)
+                print("Complete Red_Bp:", self.Red_Bp)  # Shows the entire Red_Bp structure
 
             if self.CellNodesFeatureList[current_position] == "Blue":
 
@@ -112,6 +125,9 @@ class BP:
                 # If multiple patterns are closest, pick one at random
                 index = choice(closest_patterns)
                 print(f"Blue selected index: {index}")
+                print(f"Appending {index} to Red_Bp at position")  # Debug statement
+                self.Blue_Bp.append(index)
+                print("Complete Red_Bp:", self.Blue_Bp)  # Shows the entire Red_Bp structure
 
         #When a possible brige pattern index has been used, remove from the PossibleBridgeList
         for sublist in self.PossibleBridgesList:
@@ -119,7 +135,11 @@ class BP:
                 sublist.remove(index)
         print(f"Removed {index} from all sublists in PossibleBridgesList")
 
+
         return index
+
+
+
 
 
 
@@ -169,10 +189,12 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_top_index)
                     # self.PossibleBridgesList.append(top_r_index)
                     # self.PossibleBridgesList.append(top_l_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_top_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_top_index)
+                    """
 
 
         # Check if upper right bridge pattern is possible
@@ -191,10 +213,12 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_top_right_index)
                     # self.PossibleBridgesList.append(up_l_index)
                     # self.PossibleBridgesList.append(up_r_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_top_right_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_top_right_index)
+                    """
 
         # Check if upper left bridge pattern is possible
         if index >= board_size and index % self.board_size != 0:
@@ -211,10 +235,12 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_top_left_index)
                     # self.PossibleBridgesList.append(up_l_up_index)
                     # self.PossibleBridgesList.append(up_l_down_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_top_left_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_top_left_index)
+                    """
 
         # Check if most down bridge pattern is possible
         if index >= -2 * board_size:
@@ -234,10 +260,12 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_bot_index)
                     # self.PossibleBridgesList.append(bot_l_index)
                     # self.PossibleBridgesList.append(bot_r_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_bot_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_bot_index)
+                    """
 
         # Check if down right bridge pattern is possible
         if index < self.board_size * (self.board_size - 1) and index % self.board_size != (self.board_size - 1):
@@ -255,10 +283,12 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_bot_right_index)
                     # self.PossibleBridgesList.append(bot_l_index)
                     # self.PossibleBridgesList.append(bot_r_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_bot_right_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_bot_right_index)
+                    """
 
         # Check if down left bridge pattern is possible
         if index < self.board_size * (self.board_size - 1) and index % self.board_size > 1:
@@ -275,10 +305,14 @@ class BP:
                     self.PossibleBridgesList[index].append(bp_bot_left_index)
                     # self.PossibleBridgesList.append(bot_l_up_index)
                     # self.PossibleBridgesList.append(bot_l_down_index)
+                    """
                     if playerColor == "Red":
                         self.Red_Bp[index].append(bp_bot_left_index)
                     elif playerColor == "Blue":
                         self.Blue_Bp[index].append(bp_bot_left_index)
+                    """
+
+
 
 
 
