@@ -11,6 +11,9 @@ from Helper import plotting
 from GraphTsetlinMachine.graphs import Graphs
 from GraphTsetlinMachine.tm import MultiClassGraphTsetlinMachine
 
+gameboard_size = 3
+csvName = f"{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
+
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
@@ -57,8 +60,6 @@ def read_from_csv(filename):
 
 
 args = default_args()
-gameboard_size = 3
-csvName = "3x3_set"
 
 ################## READING DATA FROM CSV #####################
 
