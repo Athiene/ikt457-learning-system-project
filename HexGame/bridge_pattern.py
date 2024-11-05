@@ -41,6 +41,7 @@ class BP:
 
         if len(self.MoveList) < 2:
             print("\nGetNextMove: Both players need to make at least one move")
+            return None
 
         # Set the current position to the opponent's last move
         current_position = self.MoveList[-2]
