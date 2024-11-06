@@ -75,34 +75,49 @@ def filterData(simulation_data):
     test_red_sample = red_samples[red_slice:]
     test_blue_sample = blue_samples[blue_slice:]
     
-    # Combine red and blue wins for training and test data
+    # Combine red and blue wins for training data
     Simulation_Train = train_red_sample + train_blue_sample
     
     # Ensure no duplicates from training set in the test set
     training_set_keys = set((sim[0], tuple(sim[1])) for sim in Simulation_Train)
-    Simulation_Test = [
-        sim for sim in (test_red_sample + test_blue_sample)
+    Simulation_Test_Red = [
+        sim for sim in test_red_sample
+        if (sim[0], tuple(sim[1])) not in training_set_keys
+    ]
+    Simulation_Test_Blue = [
+        sim for sim in test_blue_sample
         if (sim[0], tuple(sim[1])) not in training_set_keys
     ]
     
-    # Calculate the target test set size (10% of total data)
-    desired_test_size = int(0.1 * len(simulation_data))
-
-    print(f"Unique Test data: {len(Simulation_Test)}")
-    print(f"Required duplications : {desired_test_size-len(Simulation_Test)}")
+    # Ensure 1:1 ratio for red and blue wins in the test set
+    desired_test_size = int(0.1 * len(simulation_data)) // 2  # Target size for each color
     
-    duplicated_count = 0
-    # If test set is too small, duplicate random samples within the test set until it reaches the target size
-    while len(Simulation_Test) < desired_test_size:
-        duplicate_sample = random.choice(Simulation_Test)
-        duplicated_count += 1
-        Simulation_Test.append(duplicate_sample)
-
-    print(f'Total generated duplicates for Test data: {duplicated_count}')
+    print(f"Unique Test Red data: {len(Simulation_Test_Red)}")
+    print(f"Unique Test Blue data: {len(Simulation_Test_Blue)}")
+    print(f"Required duplications per color: {desired_test_size - len(Simulation_Test_Red)}")
     
-    # Shuffle the data to ensure random placement of red and blue wins
-    random.shuffle(Simulation_Train)
+    # Track duplications for each color
+    red_duplicated_count = 0
+    blue_duplicated_count = 0
+    
+    # Duplicate red wins if needed
+    while len(Simulation_Test_Red) < desired_test_size:
+        duplicate_sample = random.choice(Simulation_Test_Red)
+        Simulation_Test_Red.append(duplicate_sample)
+        red_duplicated_count += 1
+
+    # Duplicate blue wins if needed
+    while len(Simulation_Test_Blue) < desired_test_size:
+        duplicate_sample = random.choice(Simulation_Test_Blue)
+        Simulation_Test_Blue.append(duplicate_sample)
+        blue_duplicated_count += 1
+
+    # Combine balanced red and blue test sets
+    Simulation_Test = Simulation_Test_Red + Simulation_Test_Blue
     random.shuffle(Simulation_Test)
+    random.shuffle(Simulation_Train)
+
+    print(f'Total generated duplicates for Test data - Red: {red_duplicated_count}, Blue: {blue_duplicated_count}')
     
     # Print out the amount of data used
     print("AMOUNT OF DATA USING: ", len(Simulation_Train) + len(Simulation_Test))
@@ -113,9 +128,9 @@ def filterData(simulation_data):
 
     print(f"Training Data vs Testing Data: ({len(Simulation_Train)}, {len(Simulation_Test)}) ")
     print(
-        f"Training Data - Amount RED Wins (Training vs Testing): ({len(np.where(Y == 0)[0])}, {len(np.where(Y == 1)[0])})")
+        f"Training Data - Amount RED Wins: {len(np.where(Y == 0)[0])}, BLUE Wins: {len(np.where(Y == 1)[0])}")
     print(
-        f"Testing Data - Amount BLUE Wins: (Training vs Testing): ({len(np.where(Y_test == 0)[0])}, {len(np.where(Y_test == 1)[0])})")
+        f"Testing Data - Amount RED Wins: {len(np.where(Y_test == 0)[0])}, BLUE Wins: {len(np.where(Y_test == 1)[0])}")
     return Simulation_Test, Simulation_Train
 
 def fetch_simulation_games(number, gameboard_size, goBack, randomMoves):
