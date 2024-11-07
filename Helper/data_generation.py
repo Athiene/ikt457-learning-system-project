@@ -11,24 +11,24 @@ from HexGame import game
 def createCSV(board_size, examples, goBack, CSVname):
     with open(CSVname+".csv", 'w', newline='') as file:
         writer = csv.writer(file)
-        field = ["winner", "feature", "edges"]
+        field = ["winner", "feature"]
         writer.writerow(field)
 
         for i in range(examples):
             new_game = game.Game(board_size)
-            winner, feature, edges = new_game.SimulateGame(goBack)
-            writer.writerow([winner, feature, edges])
+            winner, feature = new_game.SimulateGame(goBack)
+            writer.writerow([winner, feature])
 
 
 def createCSV_noSimulation(data, CSVname):
     with open(CSVname+".csv", 'w', newline='') as file:
         writer = csv.writer(file)
-        field = ["winner", "feature", "edges"]
+        field = ["winner", "feature"]
         writer.writerow(field)
         
         for i, da in enumerate(data):
-            winner, feature, edges = da
-            writer.writerow([winner, feature, edges])
+            winner, feature = da
+            writer.writerow([winner, feature])
 
 
 def read_from_csv(filename):
@@ -38,8 +38,7 @@ def read_from_csv(filename):
         for row in reader:
             winner = int(row['winner'])
             features = eval(row['feature'])
-            edges = eval(row['edges'])
-            simulations.append([winner, features, edges])
+            simulations.append([winner, features])
     return simulations
 
 def filterData(simulation_data):
@@ -141,12 +140,12 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves):
 
     while len(red_data) < number or len(blue_data) < number:
         new_game = game.Game(gameboard_size)
-        winner, feature, edges = new_game.SimulateGame(goBack, randomMoves)
+        winner, feature = new_game.SimulateGame(goBack, randomMoves)
         # Check if winner is Red or Blue
         if winner == "0" and len(red_data) < number:
-            red_data.append((winner, feature, edges))
+            red_data.append((winner, feature))
         elif winner == "1" and len(blue_data) < number:
-            blue_data.append((winner, feature, edges))
+            blue_data.append((winner, feature))
     return red_data + blue_data
 
 def createData(gameboard_size, csvName, number_of_examples, go_back, random_moves):

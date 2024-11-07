@@ -26,10 +26,6 @@ class Game:
         # Array that contains a moves done
         self.MoveList = []
 
-        self.Red_Bp = []
-
-        self.Blue_Bp = []
-
         # Stores the maximum number of edges for each node
         self.maxEdgesPerNode = [0 for _ in range(self.board_size * self.board_size)]
         self.calculateMaxEdges()
@@ -269,25 +265,20 @@ class Game:
         return
 
     def SimulateGame(self, goBack, randomMoves):
-        print("SimulateGame started")  # Debug print to confirm function call
         condition = True
-
         while condition:
-            # Options: (1) Random moves (2) Strategy based moves
-            if randomMoves:
-                self.Winner = self.makeMove(False, self.RandomAvailableCell())
-            else:
-                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList , self.Red_Bp, self.Blue_Bp)
+            if not randomMoves:
+                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
                 move = bp.get_next_move()
                 if move is None:
-                    # Fallback to a random move if no bridge move is available
                     self.Winner = self.makeMove(False, self.RandomAvailableCell())
                 else:
-                    # Execute the selected bridge move
                     self.Winner = self.makeMove(False, move)
-            # Checks Winner is not None to break out of loop
+            if randomMoves:
+                self.Winner = self.makeMove(False, self.RandomAvailableCell())
             if self.Winner is not None:
                 condition = False
 
+        #self.print_overview()
         self.returnTurns(goBack, False)
-        return self.Winner, self.CellNodesFeatureList, self.all_edges
+        return self.Winner, self.CellNodesFeatureList

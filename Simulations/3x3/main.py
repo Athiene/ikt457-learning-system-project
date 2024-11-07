@@ -15,13 +15,14 @@ gameboard_size = 3
 Go_back = 0
 csvName = f"{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
 
+edgeList = [[] for _ in range(gameboard_size * gameboard_size)]
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=100, type=int)
     parser.add_argument("--number-of-clauses", default=200, type=int)
     parser.add_argument("--T", default=200, type=int)
-    parser.add_argument("--s", default=1.2, type=float)
+    parser.add_argument("--s", default=1.5, type=float)
     parser.add_argument("--depth", default=3, type=int)
     parser.add_argument("--hypervector-size", default=512, type=int)
     parser.add_argument("--hypervector-bits", default=2, type=int)
@@ -36,6 +37,38 @@ def default_args(**kwargs):
         if key in args.__dict__:
             setattr(args, key, value)
     return args
+
+def findAllEdges(board_size):
+    for index in range(board_size * board_size):
+        # Up-Left connection
+        if index >= board_size and (index - board_size) not in edgeList[index]:
+            edgeList[index].append(index - board_size)
+            edgeList[index - board_size].append(index)
+    
+        # Up-right connection
+        if index >= board_size and index % board_size != (board_size - 1) and (index - board_size + 1) not in edgeList[index]:
+            edgeList[index].append(index - board_size + 1)
+            edgeList[index - board_size + 1].append(index)
+    
+        # Down-Right connection
+        if index < board_size * (board_size - 1) and (index + board_size) not in edgeList[index]:
+            edgeList[index].append(index + board_size)
+            edgeList[index + board_size].append(index)
+    
+        # Down-left connection
+        if index < board_size * (board_size - 1) and index % board_size != 0 and (index + board_size - 1) not in edgeList[index]:
+            edgeList[index].append(index + board_size - 1)
+            edgeList[index + board_size - 1].append(index)
+    
+        # Right connection
+        if index % board_size != (board_size - 1) and (index + 1) not in edgeList[index]:
+            edgeList[index].append(index + 1)
+            edgeList[index + 1].append(index)
+    
+        # Left connection
+        if index % board_size != 0 and (index - 1) not in edgeList[index]:
+            edgeList[index].append(index - 1)
+            edgeList[index - 1].append(index)
 
 
 def fetch_labels(labels):
@@ -55,14 +88,15 @@ def read_from_csv(filename):
         for row in reader:
             winner = int(row['winner'])
             features = eval(row['feature'])
-            edges = eval(row['edges'])
-            simulations.append([winner, features, edges])
+            simulations.append([winner, features])
     return simulations
 
 
 args = default_args()
 
 ################## READING DATA FROM CSV #####################
+
+findAllEdges(gameboard_size)
 
 print("Reading data from CSV")
 
@@ -101,14 +135,14 @@ graphs_train = Graphs(
 )
 
 for graph_id, simulation in enumerate(Simulation_Train):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
     # print(simulation)
     graphs_train.set_number_of_graph_nodes(graph_id, len(featureList))
 
 graphs_train.prepare_node_configuration()
 
 for graph_id, simulation in enumerate(Simulation_Train):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
     for node_id in range(len(edgeList)):
         if edgeList[node_id]:
             graphs_train.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
@@ -117,7 +151,7 @@ graphs_train.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
 for graph_id, simulation in enumerate(Simulation_Train):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
 
     for node_id in range(len(edgeList)):
         # Add edges for the current node
@@ -148,13 +182,13 @@ graphs_test = Graphs(
 )
 
 for graph_id, simulation in enumerate(Simulation_Test):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
     graphs_test.set_number_of_graph_nodes(graph_id, len(featureList))
 
 graphs_test.prepare_node_configuration()
 
 for graph_id, simulation in enumerate(Simulation_Test):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
     for node_id in range(len(edgeList)):
         if edgeList[node_id]:
             graphs_test.add_graph_node(graph_id, node_id, len(edgeList[node_id]))
@@ -163,7 +197,7 @@ graphs_test.prepare_edge_configuration()
 
 # Adds actual values i.e: features and edges
 for graph_id, simulation in enumerate(Simulation_Test):
-    winner, featureList, edgeList = simulation
+    winner, featureList = simulation
 
     for node_id in range(len(edgeList)):
 
