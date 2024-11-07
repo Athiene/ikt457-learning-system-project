@@ -8,8 +8,8 @@ from Helper import data_generation
 # PARAMETERS #
 ##############
 Gameboard_size = 3
-Number_of_examples = 2000
-Go_back=2
+Number_of_examples = 500
+Go_back=0
 Random_moves = True
 CSV_name = f"{Gameboard_size}x{Gameboard_size}_goBack{Go_back}_set"
 
