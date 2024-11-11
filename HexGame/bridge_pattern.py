@@ -75,6 +75,8 @@ class BP:
             return index
         else:
             print("get_next_move: No possible bridges found")
+
+            
         return index
 
 
@@ -268,11 +270,11 @@ class BP:
                     # Get all bridge patterns that are at the maximum distance
                     farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
 
-                    # Prioritize selecting non-wall-adjacent farthest pattern if current_position already has a wall connection
 
-
-                    # Select the best pattern
                     selected_pattern = None
+
+                    #Goes through list of bridge patterns in current position and does an if check
+                    #If a bp index touching a top or bottom wall, choose that as the index
                     for pattern in bridge_patterns:
                         # Check if the pattern is wall-adjacent based on downward movement preference
                         if  pattern < self.board_size:
@@ -315,17 +317,6 @@ class BP:
             return True
         return False
 
-
-    #check if the current position(index being evalueted) is touching the top or bot wall
-    def check_top_bottom_wall_NO_PRINT_evaluate_bridge(self, current_position):
-
-        if current_position < self.board_size:
-            print(f"{current_position} is at top position")
-            return True
-        elif current_position >= self.board_size * (self.board_size - 1):
-            print(f"{current_position} is at bottom position")
-            return True
-        return False
 
 
 
