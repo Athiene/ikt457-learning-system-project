@@ -7,10 +7,13 @@ from numpy.matlib import empty
 
 class BP:
 
-    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, move_list, All_Edges):
+    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, move_list, All_Edges,  RedAI, BlueAI):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
+        self.redAI = RedAI
+        self.blueAI = BlueAI
+
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -47,13 +50,32 @@ class BP:
         playerColor = self.CellNodesFeatureList[current_position]
         print(f"get_next_move: Current Position being evaluated: {current_position} for {playerColor} ")
 
+        if playerColor == "Red":
+            if self.redAI:
+                print("Red is using AI")
+                index = self.get_next_move_with_AI()
+            else:
+                print("Red is not using AI")
+
+        if playerColor == "Blue":
+            if self.blueAI:
+                print("Blue is using AI")
+                index = self.get_next_move_with_AI()
+            else:
+                print("Blue is not using AI")
+
+
+        return index
+
+    def get_next_move_with_AI(self):
+        index = None
+        current_position = self.MoveList[-2]
 
         # Step 1: If current position is touching a wall go to detect and evaluate bridge:
         if current_position < self.board_size or current_position >= self.board_size * (self.board_size - 1):
             print(f"get_next_move: Current Position {current_position} is next to a wall, go to evaluate bridge: ")
             index = self.evaluate_bridge(current_position)
             return index
-
 
         # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
         neighbor_with_wall = self.detect_neigbour_is_with_wall(current_position)
@@ -64,8 +86,6 @@ class BP:
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
 
         print("get_next_move: No wall-adjacent neighbors detected, proceeding to bridge detection")
-
-
 
         # Step 3: Check if current position has detected bridges , if so evaluate them
         self.detect_bridge(current_position)
@@ -81,10 +101,6 @@ class BP:
 
 
         return index
-
-
-
-
 
 
     #checks if any neigbours of the current position are touching the top or bottom wall
@@ -268,6 +284,7 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
 
 
 
