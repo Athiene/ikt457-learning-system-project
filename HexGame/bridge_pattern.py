@@ -147,8 +147,7 @@ class BP:
         print(f"detect_bridge: Evaluating bridge patterns for index {index} with color {playerColor}")
 
         # Check if the most upper bridge pattern is possible
-        if index >= board_size * 2 and index % self.board_size < (self.board_size - 1):  # Ensure not in the first two rows and at least one position away from the right edge
-            # Ensure the index is not on the right wall before considering a top-right bridge pattern
+        if index >= board_size * 2 and index % self.board_size < (self.board_size - 1):
             bp_top_index = (index - 2 * board_size + 1)
             top_r_index = (index - board_size + 1)
             top_l_index = (index - board_size)
@@ -156,9 +155,8 @@ class BP:
                 if self.CellNodesFeatureList[bp_top_index] == "None" and self.CellNodesFeatureList[top_r_index] == "None" and self.CellNodesFeatureList[top_l_index] == "None":
                     self.PossibleBridgesList[index].append(bp_top_index)
 
-        # Check if upper right bridge pattern is possible (as this seems likely relevant for 17)
-        if index >= board_size and index % self.board_size < (self.board_size - 2):  # Ensure not in the first row and not in the first two positions from the right edge
-            # Ensure not in the first row and at least one away from the right edge
+        # Check if upper right bridge pattern is possible
+        if index >= board_size and index % self.board_size < (self.board_size - 2):
             bp_top_right_index = (index - self.board_size + 2)
             up_l_index = (index - self.board_size + 1)
             up_r_index = (index + 1)
@@ -177,12 +175,10 @@ class BP:
 
         # Check if most down bridge pattern is possible
         if index < board_size * (board_size - 2) and index % self.board_size > 0:  # Ensure not in the last two rows and at least one position away from the left edge
-            # the two row above index & the above and above-right index
             bp_bot_index = (index + 2 * self.board_size - 1)
             bot_r_index = (index + self.board_size - 1)
             bot_l_index = (index + self.board_size)
             if (0 <= bp_bot_index < len(self.CellNodesFeatureList) and 0 <= bot_r_index < len(self.CellNodesFeatureList) and 0 <= bot_l_index < len(self.CellNodesFeatureList) and index % self.board_size != (self.board_size + 2)):
-                # if all the cells needed for bridge pattern for current index is empty, the hex index to make the bridge pattern is appended in a list
                 if self.CellNodesFeatureList[bp_bot_index] == "None" and self.CellNodesFeatureList[bot_r_index] == "None" and self.CellNodesFeatureList[bot_l_index] == "None":
                     self.PossibleBridgesList[index].append(bp_bot_index)
 
@@ -200,7 +196,6 @@ class BP:
             bp_bot_left_index = (index + board_size - 2)
             bot_l_down_index = (index + board_size - 1)
             bot_l_up_index = (index - 1)
-
             if 0 <= bp_bot_left_index < len(self.CellNodesFeatureList) and 0 <= bot_l_up_index < len(self.CellNodesFeatureList) and 0 <= bot_l_down_index < len(self.CellNodesFeatureList):
                 if self.CellNodesFeatureList[bp_bot_left_index] == "None" and self.CellNodesFeatureList[bot_l_up_index] == "None" and  self.CellNodesFeatureList[bot_l_down_index] == "None":
                     self.PossibleBridgesList[index].append(bp_bot_left_index)
