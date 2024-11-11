@@ -56,18 +56,21 @@ class BP:
 
 
         # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
-        neighbor_with_wall = self.detect_neigbour_is_with_wall_NO_PRINT(current_position)
+        neighbor_with_wall = self.detect_neigbour_is_with_wall(current_position)
         print(f"get_next_move: Detected wall-adjacent neighbor: {neighbor_with_wall}")
 
         if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
             print(f"get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
-        print(f"get_next_move: No wall-adjacent neighbour were detected, go to detect and potentially evaluate a bridge: ")
+
+        print("get_next_move: No wall-adjacent neighbors detected, proceeding to bridge detection")
+
 
 
         # Step 3: Check if current position has detected bridges , if so evaluate them
         self.detect_bridge(current_position)
         possible_bridges = self.PossibleBridgesList[current_position]
+
         if possible_bridges:  # Checks if possible_bridges is non-empty
             print(
                 f"get_next_move: All possible bridges detected in {current_position} are: {possible_bridges}, will now evaluate them to pick the best one.")
@@ -76,7 +79,7 @@ class BP:
         else:
             print("get_next_move: No possible bridges found")
 
-            
+
         return index
 
 
@@ -96,31 +99,25 @@ class BP:
         for neighbor in neighbours:
             #if neigbours are touching the top wall wall wall, append those neigbours indexes in wall_adjacent_neigbour
             if neighbor < self.board_size:
-                if not has_top_wall_touching:
                     print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall.")
                     wall_adjacent_neighbors.append(neighbor)
-                else:
-                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
 
             #if neigbours are touching the bottom wall wall wall, append those neigbours indexes in wall_adjacent_neigbour
             elif neighbor >= self.board_size * (self.board_size - 1):
-                if not has_bottom_wall_touching:
                     print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall.")
                     wall_adjacent_neighbors.append(neighbor)
-                else:
-                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
 
         #if there are neigbours that are wall-adjacent, chose them as an index, if there are multiple, pick one of them
         if wall_adjacent_neighbors:
             index = choice(wall_adjacent_neighbors)
             print(f"check_if_neigbour_is_with_wakll: Selected wall-adjacent neighbor: {index}")
-        if not wall_adjacent_neighbors:
+        else:
             print(f"check_if_neigbour_is_with_wakll: No wall adjacent neighbors found, gonna do evaluate bridge")
 
         return index
 
 
-    def detect_neigbour_is_with_wall_NO_PRINT(self, index):
+    def detect_neigbour_is_with_wall_NO_PRINT(self, current_position):
         index = None
         current_position = self.MoveList[-2]
         neighbours = self.all_edges[current_position]
@@ -128,14 +125,13 @@ class BP:
         has_bottom_wall_touching = False
 
         wall_adjacent_neighbors = []
+
         for neighbor in neighbours:
             #if neigbours are touching the top wall wall wall, append those neigbours indexes in wall_adjacent_neigbour
             if neighbor < self.board_size:
-                if not has_top_wall_touching:
                     wall_adjacent_neighbors.append(neighbor)
       #if neigbours are touching the bottom wall wall wall, append those neigbours indexes in wall_adjacent_neigbour
             elif neighbor >= self.board_size * (self.board_size - 1):
-                if not has_bottom_wall_touching:
                     wall_adjacent_neighbors.append(neighbor)
 
         #if there are neigbours that are wall-adjacent, chose them as an index, if there are multiple, pick one of them
@@ -150,6 +146,7 @@ class BP:
         playerColor = self.CellNodesFeatureList[index]
         board_size = self.board_size
         self.PossibleBridgesList[index].clear()
+        print(f"detect_bridge: Evaluating bridge patterns for index {index} with color {playerColor}")
 
         # Check if the most upper bridge pattern is possible
         if index >= board_size * 2 and index % self.board_size < (
@@ -249,9 +246,9 @@ class BP:
 
 
 
-    def evaluate_bridge(self, index):
+    def evaluate_bridge(self, selected_pattern):
         current_position = self.MoveList[-2]
-        index = None
+        selected_pattern = None
 
         print(f"evaluate_bridge: Evaluate bridge happening from starting index: {current_position}")
 
@@ -271,7 +268,6 @@ class BP:
                     farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
 
 
-                    selected_pattern = None
 
                     #Goes through list of bridge patterns in current position and does an if check
                     #If a bp index touching a top or bottom wall, choose that as the index
@@ -293,18 +289,18 @@ class BP:
                         print(
                             f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
 
-                    index = selected_pattern
                     print(
-                        f"evaluate_bridge: Red selected bridge pattern index: {index} from possible patterns {bridge_patterns}")
-
+                        f"evaluate_bridge: Red selected bridge pattern index: {selected_pattern} from possible patterns {bridge_patterns}")
 
             # When a possible brige pattern index has been used, remove from the PossibleBridgeList
             for sublist in self.PossibleBridgesList:
-                if index in sublist:
-                    sublist.remove(index)
-            print(f"evaluate_bridge: Removed {index} from all sublists in PossibleBridgesList")
+                if selected_pattern in sublist:
+                    sublist.remove(selected_pattern)
+            print(f"evaluate_bridge: Removed {selected_pattern} from all sublists in PossibleBridgesList")
 
-            return index
+        if not bridge_patterns:
+            print(f"evaluate_bridge: No bridge patterns found in PossibleBridgesList")
+        return selected_pattern
 
 
     #check if the current position(index being evalueted) is touching the top or bot wall
@@ -316,6 +312,9 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+
 
 
 
