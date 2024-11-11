@@ -1,8 +1,5 @@
 from random import choice
 
-from jinja2.nodes import Break
-from numba.cpython.setobj import EMPTY
-from numpy.matlib import empty
 
 
 class BP:
@@ -271,7 +268,6 @@ class BP:
                 print(f"Evaluate bridge happening from {self.CellNodesFeatureList[current_position]}")
 
                 # Distance of detected bp from current position
-                integer_patterns = [x for x in bridge_patterns if isinstance(x, int)]
 
                 distances = [(x, abs(x - current_position)) for x in bridge_patterns]
                 # Find the longest distance from current position regardless of if its over or under the current
