@@ -269,42 +269,40 @@ class BP:
                     farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
 
                     # Prioritize selecting non-wall-adjacent farthest pattern if current_position already has a wall connection
+
+
+                    # Select the best pattern
                     selected_pattern = None
-
-                    # Gets a function to check if the current position is next to top or bottom wall
-                    wall_touching = self.check_top_bottom_wall_NO_PRINT(current_position)
-
-                    #goes through the farthest distance bp
-                    for pattern in farthest_patterns:
-                        # If current position is next to a wall: selects farthest index that is not next to a wall
-                        #Goal is to go farthest away from wall because we are already touching it
-                        if pattern < self.board_size:
+                    for pattern in bridge_patterns:
+                        # Check if the pattern is wall-adjacent based on downward movement preference
+                        if  pattern < self.board_size:
                             selected_pattern = pattern
-                            print(
-                                f"evaluate_bridge: Selected wall-adjacent farthest index with top wall: {selected_pattern} from possible patterns {bridge_patterns}")
+                            print(f"evaluate_bridge: Selected top-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
                             break
 
-                        elif pattern >= self.board_size * (self.board_size - 1):
+                        if  pattern >= self.board_size * (self.board_size - 1):
                             selected_pattern = pattern
-                            print(
-                                f"evaluate_bridge: Selected wall-adjacent farthest index with top wall: {selected_pattern} from possible patterns {bridge_patterns}")
+                            print(f"evaluate_bridge: Selected bottom-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
                             break
-                        else:
-                            #THE ELSE STATEMENT IS MOVED IN CHANGES_09_11
-                            # If no non-wall option is found, default to random farthest pattern
-                            selected_pattern = choice(farthest_patterns)
-                            print(f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns} ")
+
+                    # Default to a random farthest pattern if no suitable pattern is found
+                    if selected_pattern is None:
+                        selected_pattern = choice(farthest_patterns)
+                        print(
+                            f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
 
                     index = selected_pattern
-                    print(f"evaluate_bridge: Red selected bridge pattern index: {index} from possible patterns {bridge_patterns}")
+                    print(
+                        f"evaluate_bridge: Red selected bridge pattern index: {index} from possible patterns {bridge_patterns}")
+
 
             # When a possible brige pattern index has been used, remove from the PossibleBridgeList
             for sublist in self.PossibleBridgesList:
                 if index in sublist:
                     sublist.remove(index)
-            print(f"evaluate_bridge: Removed {index} from all sublists in PossibleBridgesList,  ")
+            print(f"evaluate_bridge: Removed {index} from all sublists in PossibleBridgesList")
 
-        return index
+            return index
 
 
     #check if the current position(index being evalueted) is touching the top or bot wall
@@ -316,5 +314,23 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+    #check if the current position(index being evalueted) is touching the top or bot wall
+    def check_top_bottom_wall_NO_PRINT_evaluate_bridge(self, current_position):
+
+        if current_position < self.board_size:
+            print(f"{current_position} is at top position")
+            return True
+        elif current_position >= self.board_size * (self.board_size - 1):
+            print(f"{current_position} is at bottom position")
+            return True
+        return False
+
+
+
+
+
+
 
 
