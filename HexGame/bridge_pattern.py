@@ -117,6 +117,7 @@ class BP:
             return index
         else:
             print("get_next_move: STEP 3:  No possible bridges found")
+            index = None
 
 
         return index
