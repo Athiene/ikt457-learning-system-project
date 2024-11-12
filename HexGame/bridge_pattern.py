@@ -1,16 +1,17 @@
 from random import choice
 
+from jinja2.nodes import Break
+from numba.cuda import detect
 
 
 class BP:
 
-    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, move_list, All_Edges,  RedAI, BlueAI):
+    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, red_path, move_list, All_Edges,  RedAI, BlueAI):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
         self.redAI = RedAI
         self.blueAI = BlueAI
-
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -20,6 +21,10 @@ class BP:
         # Creates an array containing arrays
         # A single array in the array represents the connections of a cell with the same symbol
         self.CellNodesEdgeList = cell_nodes_edge_list
+
+        # A single array in this list of arrays represents a path for player red
+        self.RedPaths = red_path
+
 
         # Array that contains a moves done
         self.MoveList = move_list
@@ -33,16 +38,20 @@ class BP:
 
         self.Blue_Bp = [[] for _ in range(self.board_size * self.board_size)]
 
+        self.red_edges_mapping = [[] for _ in range(self.board_size * self.board_size)]
+
         return
 
 
 
     def get_next_move(self):
         index = None
+        paths = None
 
         if len(self.MoveList) < 2:
             print("\nGetNextMove: Both players need to make at least one move")
             return None
+
 
         current_position = self.MoveList[-2]
         playerColor = self.CellNodesFeatureList[current_position]
@@ -62,14 +71,123 @@ class BP:
             else:
                 print("Blue is not using AI")
 
+        self.detect_paths()
+        self.update_paths()
         return index
 
+
+
+
+
+    def detect_paths(self):
+        current_position = self.MoveList[-2]
+        playerColor = self.CellNodesFeatureList[current_position]
+
+        if playerColor == "Red":
+            # Get all red indexes from CellNodesFeatureList
+            red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
+            print(f"find_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
+
+            # A for loop that goes through al the red indexes and uses all edges to get their edges
+            # Puts the corresponding edges for that index in a list called red_edges_mapping
+            for red_index in red_indexes:
+                red_edges = self.all_edges[red_index]
+                self.red_edges_mapping[red_index] = list(red_edges)
+
+            # Prints out all the red indexes with their corresponding edges from the list red_edges_mapping
+            print("\nfind_paths: Red indexes with their edges:")
+            for index, edges in enumerate(self.red_edges_mapping):
+                if edges:  # Only print non-empty entries for clarity
+                    print(f"find_paths: Index {index}: {edges}")
+
+
+            # Check for paths between each pair of red nodes
+            print("\nfind_paths: Paths between red nodes:")
+
+            for i, red_index in enumerate(red_indexes):
+                edges_for_index_i = set(self.red_edges_mapping[red_index])  # Convert to set for comparison
+                print(f"\nfind_paths: Current Position being evaluated: {red_index} for Red")
+                print(f"find_paths: Edges for red index {red_index}: {edges_for_index_i}")
+
+                # Compare with subsequent red indexes
+                for j in range(i + 1, len(red_indexes)):  # Start from i+1 to avoid duplicate pairs
+                    next_red_index = red_indexes[j]
+                    edges_for_next_index = set(self.red_edges_mapping[next_red_index])
+
+                    # Find common edges
+                    common_edges = edges_for_index_i.intersection(edges_for_next_index)
+
+                    # Check if a bonded path exists due to direct adjacency (neighbors)
+                    if next_red_index in edges_for_index_i:
+                        print(f"find_paths: Bonded path exists between red index {red_index} and red index {next_red_index} (neighbors).")
+                        path_found = False
+                        for path in self.RedPaths:
+                            if red_index in path or next_red_index in path:
+                                # Extend the existing path with any new unique nodes
+                                if red_index not in path:
+                                    path.append(red_index)
+                                if next_red_index not in path:
+                                    path.append(next_red_index)
+                                path_found = True
+                                print(f"find_paths: Added {red_index} and {next_red_index} to existing path: {path}")
+                                break
+
+                        # If neither index is in any existing path, create a new path
+                        if not path_found:
+                            self.RedPaths.append([red_index, next_red_index])
+                            print(f"find_paths: Created new path: [{red_index}, {next_red_index}]")
+
+                    # Check for strong path (two common edges)
+                    if len(common_edges) == 2:
+                        print(f"find_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
+                        path_found = False
+                        for path in self.RedPaths:
+                            if red_index in path or next_red_index in path:
+                                # Extend the existing path with any new unique nodes
+                                if red_index not in path:
+                                    path.append(red_index)
+                                if next_red_index not in path:
+                                    path.append(next_red_index)
+                                path_found = True
+                                break
+
+                        # If neither index is in any existing path, create a new path
+                        if not path_found:
+                            self.RedPaths.append([red_index, next_red_index])
+
+            # Final output of all unique paths
+            print("\nfind_paths: Final Red paths with unique pairs:")
+            print(self.RedPaths)
+
+    def update_paths(self):
+        disruption_found = False  # Flag to track if any disruption occurs
+
+        for path_index, path in self.RedPaths:
+            # Go through each pair of nodes in the path to check their shared edges
+            for i in range(len(path) - 1):
+                node_a = path[i]
+                node_b = path[i + 1]
+
+                # Find the common edges (neighbors) between node_a and node_b
+                neighbors_a = set(self.red_edges_mapping[node_a])
+                neighbors_b = set(self.red_edges_mapping[node_b])
+                shared_edges = neighbors_a.intersection(neighbors_b)
+
+                # Check if any of the shared edges is now filled with "Blue"
+                for edge in shared_edges:
+                    if self.CellNodesFeatureList[edge] == "Blue":
+                        print(
+                            f"A disruption occurred in path {path_index} (path: {path}) at index {edge} between nodes {node_a} and {node_b}.")
+                        disruption_found = True
+
+        # If no disruptions were found after all checks
+        if not disruption_found:
+            print("No paths were disrupted.")
 
     def get_next_move_with_AI(self):
         index = None
         current_position = self.MoveList[-2]
         playerColor = self.CellNodesFeatureList[current_position]
-
 
 
         # Step 1: If current index is next their given wall, go to evaluate bridge
@@ -354,6 +472,8 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
 
 
 
