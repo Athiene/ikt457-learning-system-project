@@ -40,11 +40,9 @@ class BP:
 
         self.red_edges_mapping = [[] for _ in range(self.board_size * self.board_size)]
 
+        self.current_winning_path = []
+
         return
-
-
-
-
 
 
 
@@ -59,7 +57,6 @@ class BP:
         current_position = self.MoveList[-2]
 
         playerColor = self.CellNodesFeatureList[current_position]
-
 
         print(f"get_next_move: Current Position being evaluated: {current_position} for {playerColor} ")
 
@@ -76,29 +73,38 @@ class BP:
                 index = self.get_next_move_with_AI()
             else:
                 print("Blue is not using AI")
-
-
         return index
+
 
     def get_next_move_with_AI(self):
         index = None
         current_position = self.MoveList[-2]
         playerColor = self.CellNodesFeatureList[current_position]
 
+
+
         # Step A: Detect paths initially
         self.detect_paths()
 
-        # Step B: Update paths to check for any disruptions
-        # Run this before moving to wall or bridge evaluation, so paths are confirmed intact
-        self.update_paths()
 
+        # Step B: If the current winning path has any disruption, fix it  (I NEED TO DETERMINE CURRENT WINNING PATH)
+        if self.disrupted_paths() is True:
+            print(f"get_next_move_with_AI: The path {self.RedPaths} has in fact been disrupted")
+
+
+
+
+
+        # Step C: If the current path touches a top or bottom, pick the current position on the opposite side to fully connect
+
+        #current_position = self.current_winning_path[-1] if self.current_winning_path else self.MoveList[-2]
         new_position = self.switch_position_on_wall_contact()
-
         if new_position != current_position:
             print(f"get_next_move_with_AI: Updated current position from {current_position} to {new_position} after wall contact.")
             current_position = new_position
 
         print(f"Current position before step 1 : {current_position}")
+
 
 
 
@@ -125,8 +131,8 @@ class BP:
                 index = self.evaluate_bridge(current_position)
                 return index
 
-
         print(f"Current position before step 2 : {current_position}")
+
 
 
         # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
@@ -138,6 +144,8 @@ class BP:
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
 
         print("get_next_move_with_AI: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
+
+
 
         # Step 3: Check if current position has detected bridges , if so evaluate them
         self.detect_bridge(current_position)
@@ -164,7 +172,7 @@ class BP:
             print(f"find_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
 
 
-            #a foor loop ging through all the red indxes and getting their edges
+            # For loop going through all red indexes and getting their edges
             for red_index in red_indexes:
                 red_edges = self.all_edges[red_index]
                 self.red_edges_mapping[red_index] = list(red_edges)
@@ -176,8 +184,10 @@ class BP:
                     print(f"find_paths: Index {index}: {edges}")
 
 
+
             # Check for paths between each pair of red nodes
             print("\nfind_paths: Paths between red nodes:")
+
 
             for i, red_index in enumerate(red_indexes):
                 edges_for_index_i = set(self.red_edges_mapping[red_index])
@@ -192,10 +202,9 @@ class BP:
                     # Find common edges between red_index and next_red_index
                     common_edges = edges_for_index_i.intersection(edges_for_next_index)
 
-                    # Handle direct adjacency (neighboring nodes)
+                    # Handle direct adjacency connection (neighboring nodes)
                     if next_red_index in edges_for_index_i:
-                        print(
-                            f"find_paths: Bonded path exists between red index {red_index} and red index {next_red_index} (neighbors).")
+                        print(f"find_paths: Bonded path exists between red index {red_index} and red index {next_red_index} (neighbors).")
                         path_found = False
 
                         # Search for existing path that includes red_index or next_red_index
@@ -215,10 +224,11 @@ class BP:
                             self.RedPaths.append([red_index, next_red_index])
                             print(f"find_paths: Created new path: [{red_index}, {next_red_index}]")
 
-                    # Handle strong connection (two common edges)
+
+
+                    # Handle bridge pattern connection (two common edges)
                     if len(common_edges) == 2:
-                        print(
-                            f"find_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
+                        print( f"find_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
                         path_found = False
 
                         # Search for an existing path that includes red_index or next_red_index
@@ -237,13 +247,47 @@ class BP:
                             self.RedPaths.append([red_index, next_red_index])
                             print(f"find_paths: Created new path: [{red_index}, {next_red_index}]")
 
+
+
+            # Step: Find the path with the longest top-to-bottom coverage
+            longest_path = None
+            max_coverage = 0
+            self.current_winning_path = []
+
+            for path in self.RedPaths:
+                if path:  # Ensure the path is not empty
+                    min_index = min(path)
+                    max_index = max(path)
+                    coverage = max_index - min_index
+
+                    print(f"Evaluating path {path}: min index = {min_index}, max index = {max_index}, coverage = {coverage}")
+
+                    # Update if this path has the longest coverage seen so far
+                    if coverage > max_coverage:
+                        max_coverage = coverage
+                        longest_path = path
+
+            # Print the path with the longest top-to-bottom coverage
+            if longest_path is not None:
+                self.current_winning_path = longest_path
+                print(f"\nThe path with the longest top-to-bottom coverage is: {longest_path} with coverage of {max_coverage}")
+            else:
+                print("\nNo valid paths found.")
+                self.current_winning_path = []
+
+
+
             # Final output of all unique paths
             print("\nfind_paths: Final Red paths with unique pairs:")
             print(self.RedPaths)
 
-    def update_paths(self):
-        disruption_found = False  # Flag to track if any disruption occurs
 
+    def update_paths(self):
+            return None
+
+
+
+    def disrupted_paths(self):
         for path_index, path in enumerate(self.RedPaths):  # Use enumerate to get both index and path
             # Go through each pair of nodes in the path to check their shared edges
             for i in range(len(path) - 1):
@@ -257,14 +301,14 @@ class BP:
 
                 # Check if any of the shared edges is now filled with "Blue"
                 for edge in shared_edges:
-                    if self.CellNodesFeatureList[edge] == "Blue":
-                        print(
-                            f"A disruption occurred in path {path_index} (path: {path}) at index {edge} between nodes {node_a} and {node_b}.")
-                        disruption_found = True
+                    if len(shared_edges) == 2:
+                        if self.CellNodesFeatureList[edge] == "Blue":
+                            print(f"disrupted_paths: A disruption occurred in path {path_index} (path: {path}) at index {edge} between nodes {node_a} and {node_b}.")
+                            return True
+                        else:
+                            print("disrupted_paths: No paths were disrupted.")
+        return False
 
-        # If no disruptions were found after all checks
-        if not disruption_found:
-            print("No paths were disrupted.")
 
 
     def switch_position_on_wall_contact(self):
@@ -338,13 +382,7 @@ class BP:
                     print(
                         f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
 
-
-
         return current_position  # Return current position if no wall contact switch is needed
-
-
-
-
 
 
     #checks if any neigbours of the current position are touching the top or bottom wall
@@ -561,10 +599,6 @@ class BP:
 
 
         return selected_pattern
-
-
-
-
 
 
 
