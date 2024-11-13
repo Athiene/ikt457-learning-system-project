@@ -103,8 +103,7 @@ class BP:
 
         print(f"get_next_move_with_AI: Current position before step 1 : {current_position}")
 
-
-
+        path_touching_wall = False  # Flag to check if the path touches a wall
 
         if playerColor == "Red":
 
@@ -129,7 +128,11 @@ class BP:
                 index = self.evaluate_bridge(current_position)
                 return index
 
+
+
+        print(f"Current position before step 2 : {current_position}")
         print(f"get_next_move_with_AI: Current position before step 2 : {current_position}")
+
 
 
 
@@ -138,7 +141,8 @@ class BP:
         print(f"get_next_move_with_AI: STEP 2: Detected wall-adjacent neighbor: {neighbor_with_wall}")
 
         if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
-            print(f"get_next_move_with_AI: STEP 2: get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
+            print(
+                f"get_next_move_with_AI: STEP 2: get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
 
         print("get_next_move_with_AI: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
@@ -387,6 +391,23 @@ class BP:
 
         wall_adjacent_neighbors = []
 
+        # Check if current_position is part of a path that already touches the top wall
+        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
+            in_top_wall_path = any(pos < self.board_size for pos in self.current_winning_path if current_position in self.current_winning_path)
+            in_bot_wall_path = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path if current_position in self.current_winning_path)
+
+            if in_top_wall_path:
+                print(
+                    f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
+                return None  # Skip adding wall-adjacent neighbors if already touching the top wall
+
+
+            if in_bot_wall_path:
+                print(
+                    f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
+                return None  # Skip adding wall-adjacent neighbors if already touching the top wall
+
+
         if playerColor == "Red":
             for neighbor in neighbours:
                 #if neighbours are touching the top wall , append those neighbours indexes in wall_adjacent_neighbours
@@ -420,6 +441,11 @@ class BP:
             print(f"check_if_neighbours_is_with_wall: No wall adjacent neighbors found, gonna do evaluate bridge")
 
         return index
+
+
+
+
+
 
 
     def detect_neighbours_is_with_wall_NO_PRINT(self, current_position):
@@ -513,10 +539,16 @@ class BP:
         print(f"evaluate_bridge: Evaluate bridge happening from starting index: {current_position}")
 
         self.detect_bridge(current_position)
+
         bridge_patterns = self.PossibleBridgesList[current_position]
 
         if not bridge_patterns:
             print(f"evaluate_bridge: No bridge patterns found in PossibleBridgesList")
+
+        # Determine if current_position is part of the winning path and if that path touches the top wall
+        in_winning_path = current_position in self.current_winning_path if hasattr(self,'current_winning_path') else False
+        path_touches_top_wall = any(pos < self.board_size for pos in self.current_winning_path) if in_winning_path else False
+
 
         if bridge_patterns:
             if self.CellNodesFeatureList[current_position] == "Red":
@@ -531,8 +563,14 @@ class BP:
                 # Get all bridge patterns that are at the maximum distance
                 farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
 
+                # Filter out bridge patterns that would lead to top wall positions if the path touches the top wall
+                if path_touches_top_wall:
+                    print(f"evaluate_bridge: Path containing {current_position} touches the top wall. Filtering out bridges to top wall positions.")
+                    bridge_patterns = [pos for pos in bridge_patterns if pos >= self.board_size]
+
+
                 #Goes through list of bridge patterns in current position and does an if check
-                #If a bp index touching a top or bottom wall, choose that as the index
+                # If a bp index touching a top or bottom wall, choose that as the index
                 for pattern in bridge_patterns:
                     # Check if the pattern is wall-adjacent based on downward movement preference
                     if  pattern < self.board_size:
@@ -544,10 +582,9 @@ class BP:
                         print(f"evaluate_bridge: Selected bottom-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
                         break
                 # Default to a random farthest pattern if no suitable pattern is found
-                if selected_pattern is None:
+                if selected_pattern is None and farthest_patterns:
                     selected_pattern = choice(farthest_patterns)
-                    print(
-                        f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
+                    print(f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
                 print(f"evaluate_bridge: Red selected bridge pattern index: {selected_pattern} from possible patterns {bridge_patterns}")
 
 
@@ -593,6 +630,7 @@ class BP:
 
 
         return selected_pattern
+
 
 
 
