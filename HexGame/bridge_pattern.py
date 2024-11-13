@@ -44,6 +44,10 @@ class BP:
 
 
 
+
+
+
+
     def get_next_move(self):
         index = None
         paths = None
@@ -52,9 +56,11 @@ class BP:
             print("\nGetNextMove: Both players need to make at least one move")
             return None
 
-
         current_position = self.MoveList[-2]
+
         playerColor = self.CellNodesFeatureList[current_position]
+
+
         print(f"get_next_move: Current Position being evaluated: {current_position} for {playerColor} ")
 
         if playerColor == "Red":
@@ -71,16 +77,81 @@ class BP:
             else:
                 print("Blue is not using AI")
 
-        self.detect_paths()
 
-        if len(self.RedPaths) > 1:
-            self.update_paths()
-
-        self.update_paths()
         return index
 
+    def get_next_move_with_AI(self):
+        index = None
+        current_position = self.MoveList[-2]
+        playerColor = self.CellNodesFeatureList[current_position]
+
+        # Step A: Detect paths initially
+        self.detect_paths()
+
+        # Step B: Update paths to check for any disruptions
+        # Run this before moving to wall or bridge evaluation, so paths are confirmed intact
+        self.update_paths()
+
+        new_position = self.switch_position_on_wall_contact()
+
+        if new_position != current_position:
+            print(f"get_next_move_with_AI: Updated current position from {current_position} to {new_position} after wall contact.")
+            current_position = new_position
+
+        print(f"Current position before step 1 : {current_position}")
 
 
+
+        if playerColor == "Red":
+
+            # Step 1: If current position is touching a wall go to detect and evaluate bridge:
+            if current_position < self.board_size:
+                print(f"get_next_move_with_AI STEP 1: Current Position {current_position} for red is next to top wall, go to evaluate bridge: ")
+                index = self.evaluate_bridge(current_position)
+                return index
+
+            if current_position >= self.board_size * (self.board_size - 1):
+                print(f"get_next_move_with_AI: STEP 1: Current Position {current_position} for red is next to bottom wall, go to evaluate bridge: ")
+                index = self.evaluate_bridge(current_position)
+                return index
+
+        if playerColor == "Blue":
+            if current_position % self.board_size == 0:
+                print(f"get_next_move_with_AI: STEP 1: Current Position {current_position} for blue is next to left wall, go to evaluate bridge: ")
+                index = self.evaluate_bridge(current_position)
+                return index
+            if current_position % self.board_size == self.board_size - 1:
+                print(f"get_next_move_with_AI: STEP 1: Current Position {current_position} for blue is next to right wall, go to evaluate bridge: ")
+                index = self.evaluate_bridge(current_position)
+                return index
+
+
+        print(f"Current position before step 2 : {current_position}")
+
+
+        # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
+        neighbor_with_wall = self.detect_neighbours_is_with_wall(current_position)
+        print(f"get_next_move_with_AI: STEP 2: Detected wall-adjacent neighbor: {neighbor_with_wall}")
+
+        if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
+            print(f"get_next_move_with_AI: STEP 2: get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
+            return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
+
+        print("get_next_move_with_AI: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
+
+        # Step 3: Check if current position has detected bridges , if so evaluate them
+        self.detect_bridge(current_position)
+        possible_bridges = self.PossibleBridgesList[current_position]
+
+        if possible_bridges:  # Checks if possible_bridges is non-empty
+            print(f"get_next_move_with_AI: STEP 3:  All possible bridges detected in {current_position} are: {possible_bridges}, will now evaluate them to pick the best one.")
+            index = self.evaluate_bridge(current_position)
+            return index
+        else:
+            print("get_next_move_with_AI: STEP 3:  No possible bridges found")
+            index = None
+
+        return index
 
 
     def detect_paths(self):
@@ -196,80 +267,103 @@ class BP:
             print("No paths were disrupted.")
 
 
-    def get_next_move_with_AI(self):
-        index = None
+    def switch_position_on_wall_contact(self):
         current_position = self.MoveList[-2]
-        playerColor = self.CellNodesFeatureList[current_position]
+
+        # Check if the current position itself is next to a wall
+        if current_position < self.board_size or current_position >= self.board_size * (self.board_size - 1):
+            print(f"switch_position_on_wall_contact: Current position {current_position} is next to a wall.")
+
+            # Check if current_position is part of any path in RedPaths
+            for path in self.RedPaths:
+                if current_position in path:
+                    unique_path_elements = list(set(path))
+                    print(
+                        f"switch_position_on_wall_contact: Unique elements in the path containing {current_position} are {unique_path_elements}")
+
+                    if len(unique_path_elements) > 1:
+                        # Check if current_position is the highest in the path (bottom wall contact), then move to the lowest
+                        if current_position == max(unique_path_elements):
+                            new_position = min(unique_path_elements)
+                            print(
+                                f"switch_position_on_wall_contact: Current position {current_position} is the highest index in the path (touching bottom wall). Moving to new current position: {new_position}")
+                            return new_position
+
+                        # Check if current_position is the lowest in the path (top wall contact), then move to the highest
+                        elif current_position == min(unique_path_elements):
+                            new_position = max(unique_path_elements)
+                            print(
+                                f"switch_position_on_wall_contact: Current position {current_position} is the lowest index in the path (touching top wall). Moving to new current position: {new_position}")
+                            return new_position
+
+                    else:
+                        # If the current position is the only unique element in the path or isn't in a path
+                        print(
+                            f"switch_position_on_wall_contact: Current position {current_position} is the only unique element in the path or isn't in a path, so no movement is needed.")
+                # No `break` here to ensure all paths are checked
+
+            # Access the neighbors of the current position
+
+        neighbours = self.all_edges[current_position]  # Use [] to index, not ()
+
+        # Determine if the current position is part of a path that already has a top or bottom wall connection
+        has_top_wall_touching = False
+        has_bottom_wall_touching = False
+
+        # Check the Red_Paths for wall touching nodes
+        for path in self.RedPaths:
+            if current_position in path:
+                # Check if any element in the path touches the top or bottom wall
+                has_top_wall_touching = any(node < self.board_size for node in path)
+                has_bottom_wall_touching = any(node >= self.board_size * (self.board_size - 1) for node in path)
+                break
+
+        # Collect neighbors that are touching the top or bottom wall
+        wall_adjacent_neighbors = []
+        for neighbor in neighbours:
+
+            if neighbor < self.board_size:
+                if not has_top_wall_touching:
+                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall.")
+                    wall_adjacent_neighbors.append(neighbor)
+                else:
+                    print(
+                        f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
+
+            elif neighbor >= self.board_size * (self.board_size - 1):
+                if not has_bottom_wall_touching:
+                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall.")
+                    wall_adjacent_neighbors.append(neighbor)
+                else:
+                    print(
+                        f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
 
 
-        # Step 1: If current index is next their given wall, go to evaluate bridge
-        if playerColor == "Red":
-            # Step 1: If current position is touching a wall go to detect and evaluate bridge:
-            if current_position < self.board_size:
-                print(f"get_next_move: STEP 1: Current Position {current_position} for red is next to top wall, go to evaluate bridge: ")
-                index = self.evaluate_bridge(current_position)
-                return index
-            if current_position >= self.board_size * (self.board_size - 1):
-                print(f"get_next_move: STEP 1: Current Position {current_position} for red is next to bottom wall, go to evaluate bridge: ")
-                index = self.evaluate_bridge(current_position)
-                return index
 
-
-        if playerColor == "Blue":
-            if current_position % self.board_size == 0:
-                print(f"get_next_move: STEP 1: Current Position {current_position} for blue is next to left wall, go to evaluate bridge: ")
-                index = self.evaluate_bridge(current_position)
-                return index
-            if current_position % self.board_size == self.board_size - 1:
-                print(f"get_next_move: STEP 1: Current Position {current_position} for blue is next to right wall, go to evaluate bridge: ")
-                index = self.evaluate_bridge(current_position)
-                return index
+        return current_position  # Return current position if no wall contact switch is needed
 
 
 
-        # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
-        neighbor_with_wall = self.detect_neighbours_is_with_wall(current_position)
-        print(f"get_next_move: STEP 2: Detected wall-adjacent neighbor: {neighbor_with_wall}")
 
-        if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
-            print(f" STEP 2: get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
-            return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
-
-        print("get_next_move: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
-
-        # Step 3: Check if current position has detected bridges , if so evaluate them
-        self.detect_bridge(current_position)
-        possible_bridges = self.PossibleBridgesList[current_position]
-
-        if possible_bridges:  # Checks if possible_bridges is non-empty
-            print(f"get_next_move: STEP 3:  All possible bridges detected in {current_position} are: {possible_bridges}, will now evaluate them to pick the best one.")
-            index = self.evaluate_bridge(current_position)
-            return index
-        else:
-            print("get_next_move: STEP 3:  No possible bridges found")
-            index = None
-
-
-        return index
 
 
     #checks if any neigbours of the current position are touching the top or bottom wall
-    def detect_neighbours_is_with_wall(self, index):
+    def detect_neighbours_is_with_wall(self, current_position):
         index = None
-        current_position = self.MoveList[-2]
         neighbours = self.all_edges[current_position]
         playerColor = self.CellNodesFeatureList[current_position]
+
         wall_adjacent_neighbors = []
 
         if playerColor == "Red":
             for neighbor in neighbours:
                 #if neighbours are touching the top wall , append those neighbours indexes in wall_adjacent_neighbours
-                if neighbor < self.board_size:
+                if neighbor < self.board_size and self.CellNodesFeatureList[neighbor] == "None":
                         print(f"check_if_neighbours_is_with_wall: Neighbor {neighbor} is touching the top wall.")
                         wall_adjacent_neighbors.append(neighbor)
 
                 #if neighbours are touching the bottom wall, append those neighbours indexes in wall_adjacent_neighbours
-                elif neighbor >= self.board_size * (self.board_size - 1):
+                elif neighbor >= self.board_size * (self.board_size - 1) and self.CellNodesFeatureList[neighbor] == "None":
                         print(f"check_if_neighbours_is_with_wall: Neighbor {neighbor} is touching the bottom wall.")
                         wall_adjacent_neighbors.append(neighbor)
 
@@ -381,8 +475,7 @@ class BP:
 
 
 
-    def evaluate_bridge(self, selected_pattern):
-        current_position = self.MoveList[-2]
+    def evaluate_bridge(self, current_position):
         selected_pattern = None
 
         print(f"evaluate_bridge: Evaluate bridge happening from starting index: {current_position}")
@@ -484,6 +577,10 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+
+
 
 
 
