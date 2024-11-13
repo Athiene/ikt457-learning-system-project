@@ -51,7 +51,7 @@ class BP:
         paths = None
 
         if len(self.MoveList) < 2:
-            print("\nGetNextMove: Both players need to make at least one move")
+            print("\nget_next_move: Both players need to make at least one move")
             return None
 
         current_position = self.MoveList[-2]
@@ -62,17 +62,17 @@ class BP:
 
         if playerColor == "Red":
             if self.redAI:
-                print("Red is using AI")
+                print("get_next_move: Red is using AI")
                 index = self.get_next_move_with_AI()
             else:
-                print("Red is not using AI")
+                print("get_next_move: Red is not using AI")
 
         if playerColor == "Blue":
             if self.blueAI:
-                print("Blue is using AI")
+                print("get_next_move: Blue is using AI")
                 index = self.get_next_move_with_AI()
             else:
-                print("Blue is not using AI")
+                print("get_next_move: Blue is not using AI")
         return index
 
 
@@ -93,17 +93,15 @@ class BP:
 
 
 
-
-
         # Step C: If the current path touches a top or bottom, pick the current position on the opposite side to fully connect
 
         #current_position = self.current_winning_path[-1] if self.current_winning_path else self.MoveList[-2]
-        new_position = self.switch_position_on_wall_contact()
+        new_position = self.switch_position_on_wall_contact(current_position)
         if new_position != current_position:
             print(f"get_next_move_with_AI: Updated current position from {current_position} to {new_position} after wall contact.")
             current_position = new_position
 
-        print(f"Current position before step 1 : {current_position}")
+        print(f"get_next_move_with_AI: Current position before step 1 : {current_position}")
 
 
 
@@ -131,7 +129,7 @@ class BP:
                 index = self.evaluate_bridge(current_position)
                 return index
 
-        print(f"Current position before step 2 : {current_position}")
+        print(f"get_next_move_with_AI: Current position before step 2 : {current_position}")
 
 
 
@@ -169,7 +167,7 @@ class BP:
         if playerColor == "Red":
             # Get all red indexes from CellNodesFeatureList
             red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
-            print(f"find_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
+            print(f"detect_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
 
 
             # For loop going through all red indexes and getting their edges
@@ -178,21 +176,21 @@ class BP:
                 self.red_edges_mapping[red_index] = list(red_edges)
 
             # Prints out all the red indexes with their corresponding edges from the list red_edges_mapping
-            print("\nfind_paths: Red indexes with their edges:")
+            print("\ndetect_paths: Red indexes with their edges:")
             for index, edges in enumerate(self.red_edges_mapping):
                 if edges:  # Only print non-empty entries for clarity
-                    print(f"find_paths: Index {index}: {edges}")
+                    print(f"detect_paths: Index {index}: {edges}")
 
 
 
             # Check for paths between each pair of red nodes
-            print("\nfind_paths: Paths between red nodes:")
+            print("\ndetect_paths: Paths between red nodes:")
 
 
             for i, red_index in enumerate(red_indexes):
                 edges_for_index_i = set(self.red_edges_mapping[red_index])
-                print(f"\nfind_paths: Current Position being evaluated: {red_index} for Red")
-                print(f"find_paths: Edges for red index {red_index}: {edges_for_index_i}")
+                print(f"\ndetect_paths: Current Position being evaluated: {red_index} for Red")
+                print(f"detect_paths: Edges for red index {red_index}: {edges_for_index_i}")
 
                 # Compare with subsequent red indexes to check for paths
                 for j in range(i + 1, len(red_indexes)):
@@ -204,7 +202,7 @@ class BP:
 
                     # Handle direct adjacency connection (neighboring nodes)
                     if next_red_index in edges_for_index_i:
-                        print(f"find_paths: Bonded path exists between red index {red_index} and red index {next_red_index} (neighbors).")
+                        print(f"detect_paths: Bonded path exists between red index {red_index} and red index {next_red_index} (neighbors).")
                         path_found = False
 
                         # Search for existing path that includes red_index or next_red_index
@@ -216,19 +214,19 @@ class BP:
                                 if next_red_index not in path:
                                     path.append(next_red_index)
                                 path_found = True
-                                print(f"find_paths: Added {red_index} and {next_red_index} to existing path: {path}")
+                                print(f"detect_paths: Added {red_index} and {next_red_index} to existing path: {path}")
                                 break
 
                         # If no path was found, create a new separate path for these connected nodes
                         if not path_found:
                             self.RedPaths.append([red_index, next_red_index])
-                            print(f"find_paths: Created new path: [{red_index}, {next_red_index}]")
+                            print(f"detect_paths: Created new path: [{red_index}, {next_red_index}]")
 
 
 
                     # Handle bridge pattern connection (two common edges)
                     if len(common_edges) == 2:
-                        print( f"find_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
+                        print( f"detect_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
                         path_found = False
 
                         # Search for an existing path that includes red_index or next_red_index
@@ -245,7 +243,7 @@ class BP:
                         # If no path was found, create a new separate path for these nodes
                         if not path_found:
                             self.RedPaths.append([red_index, next_red_index])
-                            print(f"find_paths: Created new path: [{red_index}, {next_red_index}]")
+                            print(f"detect_paths: Created new path: [{red_index}, {next_red_index}]")
 
 
 
@@ -260,7 +258,7 @@ class BP:
                     max_index = max(path)
                     coverage = max_index - min_index
 
-                    print(f"Evaluating path {path}: min index = {min_index}, max index = {max_index}, coverage = {coverage}")
+                    print(f"detect_paths: Evaluating path {path}: min index = {min_index}, max index = {max_index}, coverage = {coverage}")
 
                     # Update if this path has the longest coverage seen so far
                     if coverage > max_coverage:
@@ -270,20 +268,18 @@ class BP:
             # Print the path with the longest top-to-bottom coverage
             if longest_path is not None:
                 self.current_winning_path = longest_path
-                print(f"\nThe path with the longest top-to-bottom coverage is: {longest_path} with coverage of {max_coverage}")
+                print(f"\ndetect_paths: The path with the longest top-to-bottom coverage is: {longest_path} with coverage of {max_coverage}")
             else:
-                print("\nNo valid paths found.")
+                print("\ndetect_paths: No valid paths found.")
                 self.current_winning_path = []
 
 
 
             # Final output of all unique paths
-            print("\nfind_paths: Final Red paths with unique pairs:")
+            print("\ndetect_paths: Final Red paths with unique pairs:")
             print(self.RedPaths)
 
 
-    def update_paths(self):
-            return None
 
 
 
@@ -311,9 +307,7 @@ class BP:
 
 
 
-    def switch_position_on_wall_contact(self):
-        current_position = self.MoveList[-2]
-
+    def switch_position_on_wall_contact(self, current_position):
         # Check if the current position itself is next to a wall
         if current_position < self.board_size or current_position >= self.board_size * (self.board_size - 1):
             print(f"switch_position_on_wall_contact: Current position {current_position} is next to a wall.")
@@ -368,19 +362,19 @@ class BP:
 
             if neighbor < self.board_size:
                 if not has_top_wall_touching:
-                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall.")
+                    print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
                     print(
-                        f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
+                        f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
 
             elif neighbor >= self.board_size * (self.board_size - 1):
                 if not has_bottom_wall_touching:
-                    print(f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall.")
+                    print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
                     print(
-                        f"check_if_neigbour_is_with_wakll: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
+                        f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
 
         return current_position  # Return current position if no wall contact switch is needed
 
