@@ -6,12 +6,13 @@ from numba.cuda import detect
 
 class BP:
 
-    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, red_path, move_list, All_Edges,  RedAI, BlueAI):
+    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, red_path, move_list, All_Edges,  RedAI, BlueAI, red_bp):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
         self.redAI = RedAI
         self.blueAI = BlueAI
+        self.previous_disruption = False
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -34,7 +35,7 @@ class BP:
         # Array that contains the possible bridges
         self.PossibleBridgesList = [[] for _ in range(self.board_size * self.board_size)]
 
-        self.Red_Bp = [[] for _ in range(self.board_size * self.board_size)]
+        self.Red_Bp = red_bp
 
         self.Blue_Bp = [[] for _ in range(self.board_size * self.board_size)]
 
@@ -78,22 +79,56 @@ class BP:
 
     def get_next_move_with_AI(self):
         index = None
+
         current_position = self.MoveList[-2]
+
+        # Step 1: Adjust the starting position if there was a previous disruption
+        if self.previous_disruption:
+            # If a previous disruption was detected, go back 4 moves
+            current_position = self.MoveList[-4]
+        else:
+            # Otherwise, default to the previous move
+            current_position = self.MoveList[-2]
+
         playerColor = self.CellNodesFeatureList[current_position]
 
-
+        print(f"get_next_move_with_AI: {current_position} before detect paths")
 
         # Step A: Detect paths initially
         self.detect_paths()
 
+        print(f"get_next_move_with_AI: {current_position} after detect paths and before path_disruption")
 
+
+        path_disruption = self.disrupted_paths()
         # Step B: If the current winning path has any disruption, fix it  (I NEED TO DETERMINE CURRENT WINNING PATH)
-        if self.disrupted_paths() is True:
+        if path_disruption is not None:
             print(f"get_next_move_with_AI: The path {self.RedPaths} has in fact been disrupted")
+            self.previous_disruption = True
+            return path_disruption
+        else:
+            self.previous_disruption = False
+
+
+
+        print(f"get_next_move_with_AI: {current_position} after path_disruption and before winning path ")
+
+        filled_bp_index = self.winning_path()
+
+        if filled_bp_index is not None:
+            print(f"get_next_move_with_AI: The current winning {self.current_winning_path} has an index filled at {filled_bp_index}")
+            return filled_bp_index
+
+        #Step C
 
 
 
         # Step C: If the current path touches a top or bottom, pick the current position on the opposite side to fully connect
+
+
+
+
+
 
         #current_position = self.current_winning_path[-1] if self.current_winning_path else self.MoveList[-2]
         new_position = self.switch_position_on_wall_contact(current_position)
@@ -141,8 +176,7 @@ class BP:
         print(f"get_next_move_with_AI: STEP 2: Detected wall-adjacent neighbor: {neighbor_with_wall}")
 
         if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
-            print(
-                f"get_next_move_with_AI: STEP 2: get_next_move: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
+            print(f"get_next_move_with_AI: STEP 2: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
 
         print("get_next_move_with_AI: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
@@ -158,7 +192,8 @@ class BP:
             index = self.evaluate_bridge(current_position)
             return index
         else:
-            print("get_next_move_with_AI: STEP 3:  No possible bridges found")
+            print("get_next_move_with_AI: STEP 3:  no bridgesfound , retuning index as none")
+
             index = None
 
         return index
@@ -257,7 +292,7 @@ class BP:
             self.current_winning_path = []
 
             for path in self.RedPaths:
-                if path:  # Ensure the path is not empty
+                if path:
                     min_index = min(path)
                     max_index = max(path)
                     coverage = max_index - min_index
@@ -285,9 +320,52 @@ class BP:
 
 
 
+    def winning_path(self):
+        # Check if any position in current_winning_path touches the top wall
+        touching_top_wall = any(pos < self.board_size for pos in self.current_winning_path)
+
+        # Check if any position in current_winning_path touches the bottom wall
+        touching_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path)
+
+        # Combined condition to check if the path touches both the top and bottom walls
+        if touching_top_wall and touching_bottom_wall:
+            print("current_winning_path is touching both the top and bottom walls.")
+
+
+            # Iterate over pairs of nodes in the path
+            for i in range(len(self.current_winning_path) - 1):
+                node_a = self.current_winning_path[i]
+                node_b = self.current_winning_path[i + 1]
+
+                # Find shared edges (bridge connections) between node_a and node_b
+                neighbors_a = set(self.red_edges_mapping[node_a])
+                neighbors_b = set(self.red_edges_mapping[node_b])
+                shared_edges = neighbors_a.intersection(neighbors_b)
+                shared_edges_list = list(shared_edges)
+
+
+                # Place piece on the first unoccupied edge in shared_edges_list
+                for edge in shared_edges_list:
+                    if self.CellNodesFeatureList[edge] == "None":
+                        current_player_color = "Red" if self.Player1 else "Blue"
+                        fill_bp_index = edge
+                        print( f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b} with {current_player_color}.")
+                        return fill_bp_index
+
+        else:
+            print("current_winning_path is not touching both walls.")
+
+
 
 
     def disrupted_paths(self):
+        current_player_color = "Blue"
+
+        if self.Player1:
+            current_player_color = "Red"
+        else:
+            current_player_color = "Blue"
+
         for path_index, path in enumerate(self.RedPaths):  # Use enumerate to get both index and path
             # Go through each pair of nodes in the path to check their shared edges
             for i in range(len(path) - 1):
@@ -298,16 +376,62 @@ class BP:
                 neighbors_a = set(self.red_edges_mapping[node_a])
                 neighbors_b = set(self.red_edges_mapping[node_b])
                 shared_edges = neighbors_a.intersection(neighbors_b)
+                shared_edges_list = list(shared_edges)
 
-                # Check if any of the shared edges is now filled with "Blue"
-                for edge in shared_edges:
-                    if len(shared_edges) == 2:
-                        if self.CellNodesFeatureList[edge] == "Blue":
-                            print(f"disrupted_paths: A disruption occurred in path {path_index} (path: {path}) at index {edge} between nodes {node_a} and {node_b}.")
-                            return True
-                        else:
-                            print("disrupted_paths: No paths were disrupted.")
-        return False
+                # Initialize variables to track the status of shared edges
+                occupied_by_opponent = None  # Index of a cell occupied by opponent
+                occupied_by_self = False  # Flag to indicate if any cell is occupied by the current player
+                unoccupied_index = None  # Index of an unoccupied cell
+
+
+                print(f"disrupted_paths: Shared edges list: {shared_edges_list}")
+                print(f"disrupted_paths: Self.all_edges[[shared_edges_list[0]]]: {self.all_edges[shared_edges_list[0]]}")
+                print(f"disrupted_paths: Self.all_edges[[shared_edges_list[1]]]: {self.all_edges[shared_edges_list[1]]}")
+
+
+                # If the first index in shared_edges_list is an edge for second shared_edges_list index
+                if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                    return None
+
+                # If the first second in shared_edges_list is an edge for first shared_edges_list index
+                if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
+                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                    return None
+
+                # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
+                for edge in shared_edges_list:
+                    cell_status = self.CellNodesFeatureList[edge]
+                    cell_status = self.CellNodesFeatureList[edge]
+
+                    if cell_status == "None":
+                        unoccupied_index = edge  # Track an unoccupied cell index
+                    elif cell_status == current_player_color:
+                        occupied_by_self = True  # Mark that a cell is occupied by the current player
+                    else:
+                        occupied_by_opponent = edge  # Track opponent's occupied cell
+
+                # Determine the outcome based on occupancy status
+                if occupied_by_self:
+                    # Return False if any shared edge cell is occupied by the current player's piece
+                    print("disrupted_paths: One of the cells is occupied by the current player's piece.")
+                    return None
+                elif occupied_by_opponent is not None and unoccupied_index is not None:
+                    # Return the unoccupied cell index if only one cell is occupied by the opponent
+                    print(f"disrupted_paths: Returning unoccupied cell index {unoccupied_index}.")
+                    return unoccupied_index
+                elif occupied_by_opponent is not None and unoccupied_index is None:
+                    # Both cells are occupied (by opponent or otherwise), return None
+                    print("disrupted_paths: Both shared edge cells are occupied. Returning None.")
+                    return None
+                else:
+                    # No specific conditions met; return None as a default
+                    print("disrupted_paths: No conditions met. Returning None.")
+                    return None
+
+
+
+
 
 
 
@@ -369,16 +493,14 @@ class BP:
                     print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
-                    print(
-                        f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
+                    print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
 
             elif neighbor >= self.board_size * (self.board_size - 1):
                 if not has_bottom_wall_touching:
                     print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
-                    print(
-                        f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
+                    print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall, but a bottom wall touching index already exists in the path. Skipping.")
 
         return current_position  # Return current position if no wall contact switch is needed
 
@@ -392,7 +514,8 @@ class BP:
         wall_adjacent_neighbors = []
 
         # Check if current_position is part of a path that already touches the top wall
-        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
+        #        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
+        if playerColor == "Red":
             in_top_wall_path = any(pos < self.board_size for pos in self.current_winning_path if current_position in self.current_winning_path)
             in_bot_wall_path = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path if current_position in self.current_winning_path)
 
@@ -406,8 +529,6 @@ class BP:
                 print(
                     f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
                 return None  # Skip adding wall-adjacent neighbors if already touching the top wall
-
-
         if playerColor == "Red":
             for neighbor in neighbours:
                 #if neighbours are touching the top wall , append those neighbours indexes in wall_adjacent_neighbours
@@ -539,7 +660,6 @@ class BP:
         print(f"evaluate_bridge: Evaluate bridge happening from starting index: {current_position}")
 
         self.detect_bridge(current_position)
-
         bridge_patterns = self.PossibleBridgesList[current_position]
 
         if not bridge_patterns:
@@ -548,44 +668,64 @@ class BP:
         # Determine if current_position is part of the winning path and if that path touches the top wall
         in_winning_path = current_position in self.current_winning_path if hasattr(self,'current_winning_path') else False
         path_touches_top_wall = any(pos < self.board_size for pos in self.current_winning_path) if in_winning_path else False
-
+        path_touches_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path) if in_winning_path else False
 
         if bridge_patterns:
             if self.CellNodesFeatureList[current_position] == "Red":
-
                 print(f"Evaluate bridge happening from {self.CellNodesFeatureList[current_position]}")
-
-                # Distance of detected bp from current position
-
-                distances = [(x, abs(x - current_position)) for x in bridge_patterns]
-                # Find the longest distance from current position regardless of if its over or under the current
-                max_distance = max(distances, key=lambda x: x[1])[1]
-                # Get all bridge patterns that are at the maximum distance
-                farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
 
                 # Filter out bridge patterns that would lead to top wall positions if the path touches the top wall
                 if path_touches_top_wall:
-                    print(f"evaluate_bridge: Path containing {current_position} touches the top wall. Filtering out bridges to top wall positions.")
+                    print(f"evaluate_bridge: hei Path containing {current_position} touches the top wall. Filtering out bridges to top wall positions.")
                     bridge_patterns = [pos for pos in bridge_patterns if pos >= self.board_size]
 
+                    # Sort bridge patterns in descending order (highest indexes first) to prioritize downward movement
+                    sorted_patterns = sorted(bridge_patterns, reverse=True)
+                    selected_pattern = sorted_patterns[0] if sorted_patterns else None
+                    self.Red_Bp.append(selected_pattern)
+                    print(f"evaluate_bridge: hei Selected highest index pattern: {selected_pattern} from possible patterns {sorted_patterns}")
 
-                #Goes through list of bridge patterns in current position and does an if check
-                # If a bp index touching a top or bottom wall, choose that as the index
-                for pattern in bridge_patterns:
-                    # Check if the pattern is wall-adjacent based on downward movement preference
-                    if  pattern < self.board_size:
-                        selected_pattern = pattern
-                        print(f"evaluate_bridge: Selected top-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
-                        break
-                    if  pattern >= self.board_size * (self.board_size - 1):
-                        selected_pattern = pattern
-                        print(f"evaluate_bridge: Selected bottom-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
-                        break
-                # Default to a random farthest pattern if no suitable pattern is found
-                if selected_pattern is None and farthest_patterns:
-                    selected_pattern = choice(farthest_patterns)
-                    print(f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
-                print(f"evaluate_bridge: Red selected bridge pattern index: {selected_pattern} from possible patterns {bridge_patterns}")
+                # Prioritize lowest bridge pattern for upward movement if path touches the bottom wall
+                elif path_touches_bottom_wall:
+                    print(f"evaluate_bridge: hei Path containing {current_position} touches the bottom wall. Prioritizing the lowest bridge pattern for upward movement.")
+                    selected_pattern = min(bridge_patterns)  # Choose the bridge pattern with the lowest index
+                    print(f"evaluate_bridge: hei Selected lowest index pattern: {selected_pattern} from possible patterns {bridge_patterns}")
+                    self.Red_Bp.append(selected_pattern)
+
+
+                else:
+                    # Distance of detected bp from current position
+                    distances = [(x, abs(x - current_position)) for x in bridge_patterns]
+                    # Find the longest distance from current position regardless of if its over or under the current
+                    max_distance = max(distances, key=lambda x: x[1])[1]
+                    # Get all bridge patterns that are at the maximum distance
+                    farthest_patterns = [x[0] for x in distances if x[1] == max_distance]
+
+
+                    #Goes through list of bridge patterns in current position and does an if check
+                    # If a bp index touching a top or bottom wall, choose that as the index
+                    for pattern in bridge_patterns:
+                        # Check if the pattern is wall-adjacent based on downward movement preference
+                        if  pattern < self.board_size:
+                            selected_pattern = pattern
+                            self.Red_Bp.append(selected_pattern)
+
+                            print(f"evaluate_bridge: Selected top-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
+                            break
+                        if  pattern >= self.board_size * (self.board_size - 1):
+                            selected_pattern = pattern
+                            self.Red_Bp.append(selected_pattern)
+                            print(f"evaluate_bridge: Selected bottom-wall-adjacent farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
+                            break
+
+                    # Default to a random farthest pattern if no suitable pattern is found
+                    if selected_pattern is None and farthest_patterns:
+                        selected_pattern = choice(farthest_patterns)
+                        self.Red_Bp.append(selected_pattern)
+                        print(f"evaluate_bridge: Selected farthest index: {selected_pattern} from possible patterns {bridge_patterns}")
+                    print(f"evaluate_bridge: Red selected bridge pattern index: {selected_pattern} from possible patterns {bridge_patterns}")
+
+
 
 
             if self.CellNodesFeatureList[current_position] == "Blue":
@@ -643,6 +783,10 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+
+
 
 
 
