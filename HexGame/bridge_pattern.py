@@ -82,23 +82,37 @@ class BP:
 
         current_position = self.MoveList[-2]
 
-        # Step 1: Adjust the starting position if there was a previous disruption
-        if self.previous_disruption:
-            # If a previous disruption was detected, go back 4 moves
+        # Step 1: Set the starting position based on whether a disruption occurred
+        if self.previous_disruption and len(self.MoveList) >= 4:
+            # Go back 4 moves if there was a previous disruption
             current_position = self.MoveList[-4]
+            print(
+                f"get_next_move_with_AI: Adjusting position due to disruption, current_position set to {current_position}")
         else:
-            # Otherwise, default to the previous move
+            # Default to the last move if no disruption
             current_position = self.MoveList[-2]
+            print(f"get_next_move_with_AI: No disruption, current_position set to {current_position}")
 
         playerColor = self.CellNodesFeatureList[current_position]
+        print(f"get_next_move_with_AI: Current position {current_position} before detect paths")
 
-        print(f"get_next_move_with_AI: {current_position} before detect paths")
-
-        # Step A: Detect paths initially
+        # Step A: Detect paths
         self.detect_paths()
+        print(f"get_next_move_with_AI: Detected paths, current RedPaths: {self.RedPaths}")
 
-        print(f"get_next_move_with_AI: {current_position} after detect paths and before path_disruption")
+        # Step B: Check for path disruption
+        path_disruption = self.disrupted_paths()
+        print(f"get_next_move_with_AI: path_disruption returned: {path_disruption}")
 
+        # Step C: Handle path disruption if detected
+        if path_disruption is not None:
+            print(f"get_next_move_with_AI: Path {self.RedPaths} has been disrupted at {path_disruption}")
+            self.previous_disruption = True
+            # Go back 4 moves in the next call if a disruption occurs
+            return path_disruption
+        else:
+            self.previous_disruption = False
+            print("get_next_move_with_AI: No path disruption detected.")
 
         path_disruption = self.disrupted_paths()
         # Step B: If the current winning path has any disruption, fix it  (I NEED TO DETERMINE CURRENT WINNING PATH)
@@ -110,15 +124,17 @@ class BP:
             self.previous_disruption = False
 
 
-
         print(f"get_next_move_with_AI: {current_position} after path_disruption and before winning path ")
 
+        self.winning_path()
+
+        """
         filled_bp_index = self.winning_path()
 
         if filled_bp_index is not None:
             print(f"get_next_move_with_AI: The current winning {self.current_winning_path} has an index filled at {filled_bp_index}")
             return filled_bp_index
-
+        """
         #Step C
 
 
@@ -330,27 +346,6 @@ class BP:
         # Combined condition to check if the path touches both the top and bottom walls
         if touching_top_wall and touching_bottom_wall:
             print("current_winning_path is touching both the top and bottom walls.")
-
-
-            # Iterate over pairs of nodes in the path
-            for i in range(len(self.current_winning_path) - 1):
-                node_a = self.current_winning_path[i]
-                node_b = self.current_winning_path[i + 1]
-
-                # Find shared edges (bridge connections) between node_a and node_b
-                neighbors_a = set(self.red_edges_mapping[node_a])
-                neighbors_b = set(self.red_edges_mapping[node_b])
-                shared_edges = neighbors_a.intersection(neighbors_b)
-                shared_edges_list = list(shared_edges)
-
-
-                # Place piece on the first unoccupied edge in shared_edges_list
-                for edge in shared_edges_list:
-                    if self.CellNodesFeatureList[edge] == "None":
-                        current_player_color = "Red" if self.Player1 else "Blue"
-                        fill_bp_index = edge
-                        print( f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b} with {current_player_color}.")
-                        return fill_bp_index
 
         else:
             print("current_winning_path is not touching both walls.")
