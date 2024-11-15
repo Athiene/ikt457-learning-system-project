@@ -78,7 +78,11 @@ class BP:
     def get_next_move_with_AI(self):
         index = None
 
-        current_position = self.MoveList[-2]
+        # Step A: Detect paths
+        self.detect_paths()
+        print(f"get_next_move_with_AI: Detected paths, current RedPaths: {self.RedPaths}")
+
+
 
         # Step 1: Set the starting position based on whether a disruption occurred
         if self.previous_disruption:
@@ -94,9 +98,6 @@ class BP:
         playerColor = self.CellNodesFeatureList[current_position]
         print(f"get_next_move_with_AI: Current position {current_position} before detect paths")
 
-        # Step A: Detect paths
-        self.detect_paths()
-        print(f"get_next_move_with_AI: Detected paths, current RedPaths: {self.RedPaths}")
 
         # Step B: Check for path disruption
         path_disruption = self.disrupted_paths()
@@ -200,10 +201,12 @@ class BP:
 
 
     def detect_paths(self):
-        current_position = self.MoveList[-2]
-        playerColor = self.CellNodesFeatureList[current_position]
+        if self.Player1:
+            current_player_color = "Red"
+        else:
+            current_player_color = "Blue"
 
-        if playerColor == "Red":
+        if current_player_color == "Red":
             # Get all red indexes from CellNodesFeatureList
             red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
             print(f"detect_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
@@ -226,6 +229,8 @@ class BP:
             print("\ndetect_paths: Paths between red nodes:")
 
 
+
+
             for i, red_index in enumerate(red_indexes):
                 edges_for_index_i = set(self.red_edges_mapping[red_index])
                 print(f"\ndetect_paths: Current Position being evaluated: {red_index} for Red")
@@ -234,10 +239,10 @@ class BP:
                 # Compare with subsequent red indexes to check for paths
                 for j in range(i + 1, len(red_indexes)):
                     next_red_index = red_indexes[j]
+
                     edges_for_next_index = set(self.red_edges_mapping[next_red_index])
 
                     # Find common edges between red_index and next_red_index
-                    common_edges = edges_for_index_i.intersection(edges_for_next_index)
 
                     # Handle direct adjacency connection (neighboring nodes)
                     if next_red_index in edges_for_index_i:
@@ -263,28 +268,36 @@ class BP:
 
 
 
-                    # Handle bridge pattern connection (two common edges)
-                    if len(common_edges) == 2:
-                        print( f"detect_paths: Path exists between red index {red_index} and red index {next_red_index} with common edges: {common_edges}")
-                        path_found = False
+                    shared_edges = edges_for_index_i.intersection(edges_for_next_index)
+                    shared_edges_list = list(shared_edges)
 
-                        # Search for an existing path that includes red_index or next_red_index
-                        for path in self.RedPaths:
-                            if red_index in path or next_red_index in path:
-                                # Extend the existing path with any new unique nodes
-                                if red_index not in path:
-                                    path.append(red_index)
-                                if next_red_index not in path:
-                                    path.append(next_red_index)
-                                path_found = True
-                                break
+                    if len(shared_edges_list) == 2:
+                        print(f"detect_paths: Shared edges: {shared_edges_list}")
 
-                        # If no path was found, create a new separate path for these nodes
-                        if not path_found:
-                            self.RedPaths.append([red_index, next_red_index])
-                            print(f"detect_paths: Created new path: [{red_index}, {next_red_index}]")
+                        cell_status_1 = self.CellNodesFeatureList[shared_edges_list[0]]
+                        cell_status_2 = self.CellNodesFeatureList[shared_edges_list[1]]
+
+                        if cell_status_1 == "None" and cell_status_2 == "None":
+
+                            path_found = False
+
+                            # Search for an existing path that includes red_index or next_red_index
+                            for path in self.RedPaths:
+                                if red_index in path or next_red_index in path:
+                                    # Extend the existing path with any new unique nodes
+                                    if red_index not in path:
+                                        path.append(red_index)
+                                    if next_red_index not in path:
+                                        path.append(next_red_index)
+                                    path_found = True
+                                    break
 
 
+
+                            # If no path was found, create a new separate path for these nodes
+                            if not path_found:
+                                self.RedPaths.append([red_index, next_red_index])
+                                print(f"detect_paths: Created new path: [{red_index}, {next_red_index}]")
 
             # Step: Find the path with the longest top-to-bottom coverage
             longest_path = None
@@ -322,10 +335,14 @@ class BP:
 
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
+
         touching_top_wall = (pos < self.board_size for pos in self.Current_Winning_Path)
 
         # Check if any position in current_winning_path touches the bottom wall
         touching_bottom_wall = (pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path)
+
+        print(f"winning_path: touching_top_wall {touching_top_wall}")
+        print(f"winning_path: touching_bottom_wall {touching_bottom_wall}")
 
         # Combined condition to check if the path touches both the top and bottom walls
         if touching_top_wall and touching_bottom_wall:
@@ -425,7 +442,6 @@ class BP:
 
                 # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
                 for edge in shared_edges_list:
-                    cell_status = self.CellNodesFeatureList[edge]
                     cell_status = self.CellNodesFeatureList[edge]
 
                     if cell_status == "None":
