@@ -336,7 +336,6 @@ class BP:
             print(self.RedPaths)
 
 
-
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
 
@@ -374,39 +373,29 @@ class BP:
                 shared_edges_list = list(shared_edges)
 
                 print(f"winning_path: shared_edges_list: {shared_edges_list}")
+                # If fully connected, then proceed to fill
+                if fully_connected:
 
-                # Check if there are at least two shared edges to form a valid bridge
-                if len(shared_edges_list) < 2:
-                    print("winning_path: Not enough shared edges to form a bridge pattern.")
-                    fully_connected = False
-                    break
+                    if len(shared_edges_list) < 1:
+                        # If the first second in shared_edges_list is not an edge for first shared_edges_list index
+                        if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
+                            print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                            continue
 
-                # Confirm mutual connection in the all_edges map
-                if (shared_edges_list[0] not in self.all_edges[shared_edges_list[1]] or shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]):
-                    print("winning_path: This is not a bridge pattern; disruption detected.")
-                    fully_connected = False
-                    break
+                    if len(shared_edges_list) < 1:
+                        # If the first index in shared_edges_list is not an edge for second shared_edges_list index
+                        if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                            print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                            continue
 
-            # If fully connected, then proceed to fill
-            if fully_connected:
-                for i in range(len(self.Current_Winning_Path) - 1):
-                    node_a = self.Current_Winning_Path[i]
-                    node_b = self.Current_Winning_Path[i + 1]
-                    neighbors_a = set(self.red_edges_mapping[node_a])
-                    neighbors_b = set(self.red_edges_mapping[node_b])
-                    shared_edges = neighbors_a.intersection(neighbors_b)
-                    shared_edges_list = list(shared_edges)
+                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[shared_edges_list[1]] == "Red"):
+                        continue 
 
-                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and
-                            self.CellNodesFeatureList[shared_edges_list[1]] == "None"):
+                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[shared_edges_list[1]] == "None"):
                         fill_bp_index = choice(shared_edges_list)
                         print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
                         return fill_bp_index
-
-
         return None
-
-
 
 
     def disrupted_paths(self):
@@ -483,11 +472,6 @@ class BP:
                     # No specific conditions met; return None as a default
                     print("disrupted_paths: No conditions met. Returning None.")
                     return None
-
-
-
-
-
 
 
     def switch_position_on_wall_contact(self, current_position):
@@ -575,7 +559,6 @@ class BP:
         return current_position  # Return current position if no wall contact switch is needed
 
 
-    #checks if any neigbours of the current position are touching the top or bottom wall
     def detect_neighbours_is_with_wall(self, current_position):
         index = None
         neighbours = self.all_edges[current_position]
@@ -650,11 +633,6 @@ class BP:
         return index
 
 
-
-
-
-
-
     def detect_neighbours_is_with_wall_NO_PRINT(self, current_position):
         index = None
         current_position = self.MoveList[-2]
@@ -674,7 +652,6 @@ class BP:
             index = choice(wall_adjacent_neighbors)
 
         return index
-
 
 
     #detects bridges for current position
@@ -875,8 +852,6 @@ class BP:
 
 
         return selected_pattern
-
-
 
 
     #check if the current position(index being evalueted) is touching the top or bot wall
