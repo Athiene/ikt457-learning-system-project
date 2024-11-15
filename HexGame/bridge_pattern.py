@@ -190,11 +190,65 @@ class BP:
             print(f"get_next_move_with_AI: STEP 3:  All possible bridges detected in {current_position} are: {possible_bridges}, will now evaluate them to pick the best one.")
             index = self.evaluate_bridge(current_position)
             return index
-        else:
+
+
+        #########################################################################################################
+        # If current position has has no bridge patterns, find the free neigbour closest to opposite wall  #
+        #########################################################################################################
+        closest_opposite_wall_index = self.opposite_wall_cloesest_index(current_position)
+        if closest_opposite_wall_index:
             print("get_next_move_with_AI: STEP 3:  no bridgesfound , retuning index as none")
-            index = None
+            return index
+
+
 
         return index
+
+
+
+
+
+
+
+    def opposite_wall_cloesest_index(self, current_position):
+
+        neighbours = self.all_edges[current_position]
+
+        print(f"opposite_wall_cloesest_index: neighbours for {current_position}: {neighbours}")
+
+        top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+        bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if
+                          index >= self.board_size * (self.board_size - 1)]
+
+        touching_top_wall = False
+        for node in self.Current_Winning_Path:
+            if node in top_wall_nodes:
+                print(
+                    f"opposite_wall_cloesest_index: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_top_wall = True
+
+        touching_bot_wall = False
+        for node in self.Current_Winning_Path:
+            if node in bot_wall_nodes:
+                print(
+                    f"opposite_wall_cloesest_index: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_bot_wall = True
+
+        if touching_bot_wall is True:
+            lowest_neighbour = min(neighbours)
+            if self.CellNodesFeatureList[lowest_neighbour] == "None":
+                index = lowest_neighbour
+                print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to top wall ")
+                return index
+
+        if touching_top_wall is True:
+            highest_neighbour = max(neighbours)
+            if self.CellNodesFeatureList[highest_neighbour] == "None":
+                index = highest_neighbour
+                print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to bot wall ")
+                return index
+
+        return None
 
 
     def detect_paths(self):
@@ -856,6 +910,9 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+
 
 
 
