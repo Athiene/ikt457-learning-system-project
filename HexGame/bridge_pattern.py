@@ -200,7 +200,6 @@ class BP:
             print("get_next_move_with_AI: STEP 3:  no bridgesfound , retuning index as none")
             return index
 
-
         else:
             index = None
 
@@ -427,21 +426,21 @@ class BP:
                 # If fully connected, then proceed to fill
                 if fully_connected:
 
-                    if  len(shared_edges_list) > 1:
+                    if len(shared_edges_list) >= 2:
                         # If the first second in shared_edges_list is not an edge for first shared_edges_list index
                         if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
                             print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
                             continue
 
-                        # If the first index in shared_edges_list is not an edge for second shared_edges_list index
+
                         elif shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
                             print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
                             continue
 
-                        if self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[shared_edges_list[1]] == "Red":
+                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[shared_edges_list[1]] == "Red"):
                             continue
 
-                        if self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[shared_edges_list[1]] == "None":
+                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[shared_edges_list[1]] == "None"):
                             fill_bp_index = choice(shared_edges_list)
                             print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
                             return fill_bp_index
