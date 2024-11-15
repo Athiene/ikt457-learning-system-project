@@ -198,8 +198,6 @@ class BP:
         if closest_opposite_wall_index:
             print("get_next_move_with_AI: STEP 3:  no bridgesfound , retuning index as none")
             return index
-
-
         else:
             index = None
 
@@ -378,53 +376,57 @@ class BP:
         for node in self.Current_Winning_Path:
             if node in top_wall_nodes:
                 print(
-                    f"get_next_move: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    f"current_winning_path: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
                 touching_top_wall = True
 
         touching_bot_wall = False
         for node in self.Current_Winning_Path:
             if node in bot_wall_nodes:
                 print(
-                    f"get_next_move: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    f"current_winning_path: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
                 touching_bot_wall = True
 
         # Combined condition to check if the path touches both the top and bottom walls
         if touching_top_wall is True and touching_bot_wall is True:
             print(f"current_winning_path {self.Current_Winning_Path} is touching both the top and bottom walls.")
 
+
+
             # Confirm that the path is fully connected in a bridge pattern
             fully_connected = True
-            for i in range(len(self.Current_Winning_Path) - 1):
-                node_a = self.Current_Winning_Path[i]
-                node_b = self.Current_Winning_Path[i + 1]
 
-                # Find shared edges (bridge connections) between node_a and node_b
-                neighbors_a = set(self.red_edges_mapping[node_a])
-                neighbors_b = set(self.red_edges_mapping[node_b])
-                shared_edges = neighbors_a.intersection(neighbors_b)
-                shared_edges_list = list(shared_edges)
+            for i in range(len(self.Current_Winning_Path)):
+                for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
+                    node_a = self.Current_Winning_Path[i]
+                    node_b = self.Current_Winning_Path[j]
 
-                print(f"winning_path: shared_edges_list: {shared_edges_list}")
-                # If fully connected, then proceed to fill
-                if fully_connected:
+                    # Find shared edges (bridge connections) between node_a and node_b
+                    neighbors_a = set(self.red_edges_mapping[node_a])
+                    neighbors_b = set(self.red_edges_mapping[node_b])
+                    shared_edges = neighbors_a.intersection(neighbors_b)
+                    shared_edges_list = list(shared_edges)
 
-                    if len(shared_edges_list) <= 1:
-                        continue
+                    print(f"current_winning_path: shared_edges_list: {shared_edges_list}")
+                    # If fully connected, then proceed to fill
+                    if fully_connected:
 
-                    if len(shared_edges_list) == 2:
-                        if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
-                            print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                        if len(shared_edges_list) <= 1:
                             continue
 
-                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[
-                        shared_edges_list[1]] == "Red"):
-                        continue
+                        if len(shared_edges_list) == 2:
+                            if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                                print("current_winning_path: This is not a bridge pattern")
+                                continue
 
-                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[
-                        shared_edges_list[1]] == "None"):
-                        fill_bp_index = choice(shared_edges_list)
-                        print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
-                        return fill_bp_index
+                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[
+                            shared_edges_list[1]] == "Red"):
+                            continue
+
+                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[
+                            shared_edges_list[1]] == "None"):
+                            fill_bp_index = choice(shared_edges_list)
+                            print(f"current_winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
+                            return fill_bp_index
         return None
 
     def disrupted_paths(self):
@@ -435,71 +437,71 @@ class BP:
         else:
             current_player_color = "Blue"
 
-        for i, path in enumerate(self.Current_Winning_Path):  # Use enumerate to get both index and path
-            # Go through each pair of nodes in the path to check their shared edges
-            node_a = self.Current_Winning_Path[i]
-            node_b = self.Current_Winning_Path[i + 1]
+        for i in range(len(self.Current_Winning_Path)):
+            for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
+                print(f"disrupted_paths -> Current_Winning_Path: {self.Current_Winning_Path}")
 
-            # Find the common edges (neighbors) between node_a and node_b
-            neighbors_a = set(self.red_edges_mapping[node_a])
-            neighbors_b = set(self.red_edges_mapping[node_b])
-            shared_edges = neighbors_a.intersection(neighbors_b)
-            shared_edges_list = list(shared_edges)
+                node_a = self.Current_Winning_Path[i]
+                node_b = self.Current_Winning_Path[j]
 
-            # Initialize variables to track the status of shared edges
-            occupied_by_opponent = None  # Index of a cell occupied by opponent
-            occupied_by_self = False  # Flag to indicate if any cell is occupied by the current player
-            unoccupied_index = None  # Index of an unoccupied cell
+                # Find shared edges (bridge connections) between node_a and node_b
+                neighbors_a = set(self.red_edges_mapping[node_a])
+                neighbors_b = set(self.red_edges_mapping[node_b])
+                shared_edges = neighbors_a.intersection(neighbors_b)
+                shared_edges_list = list(shared_edges)
 
-            print(f"disrupted_paths: Shared edges list: {shared_edges_list}")
-            print(f"disrupted_paths: Length of Shared edges list: {len(shared_edges_list)}")
+                # Initialize variables to track the status of shared edges
+                occupied_by_opponent = None  # Index of a cell occupied by opponent
+                occupied_by_self = False  # Flag to indicate if any cell is occupied by the current player
+                unoccupied_index = None  # Index of an unoccupied cell
 
-            print(f"disrupted_paths: Self.all_edges[[shared_edges_list[0]]]: {self.all_edges[shared_edges_list[0]]}")
+                print(f"disrupted_paths: Shared edges list: {shared_edges_list}")
+                print(f"disrupted_paths: Length of Shared edges list: {len(shared_edges_list)}")
 
-            if len(shared_edges_list) < 1:
-                print(
-                    f"disrupted_paths: Self.all_edges[[shared_edges_list[1]]]: {self.all_edges[shared_edges_list[1]]}")
+                if len(shared_edges_list) < 1:
+                    print(f"disrupted_paths: Self.all_edges[[shared_edges_list[1]]]: Empty")
+                    continue
 
-            if len(shared_edges_list) == 2:
-                # If the first second in shared_edges_list is not an edge for first shared_edges_list index
-                if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
-                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                if len(shared_edges_list) == 2:
+                    # If the first second in shared_edges_list is not an edge for first shared_edges_list index
+                    if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
+                        print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                        continue
+
+                if len(shared_edges_list) == 2:
+                    # If the first index in shared_edges_list is not an edge for second shared_edges_list index
+                    if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                        print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                        continue
+
+                # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
+                for edge in shared_edges_list:
+                    cell_status = self.CellNodesFeatureList[edge]
+
+                    if cell_status == "None":
+                        unoccupied_index = edge  # Track an unoccupied cell index
+                    elif cell_status == current_player_color:
+                        occupied_by_self = True  # Mark that a cell is occupied by the current player
+                    else:
+                        occupied_by_opponent = edge  # Track opponent's occupied cell
+
+                # Determine the outcome based on occupancy status
+                if occupied_by_self:
+                    # Continue if any shared edge cell is occupied by the current player's piece
+                    print("disrupted_paths: One of the cells is occupied by the current player's piece.")
+                    continue
+                elif occupied_by_opponent is not None and unoccupied_index is not None:
+                    # Return the unoccupied cell index if only one cell is occupied by the opponent
+                    print(f"disrupted_paths: Returning unoccupied cell index {unoccupied_index}.")
+                    return unoccupied_index
+                elif occupied_by_opponent is not None and unoccupied_index is None:
+                    # If both cells are occupied (by opponent or otherwise), return None
+                    print("disrupted_paths: Both shared edge cells are occupied. Returning None.")
                     return None
-
-            if len(shared_edges_list) == 2:
-                # If the first index in shared_edges_list is not an edge for second shared_edges_list index
-                if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
-                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
-                    return None
-
-            # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
-            for edge in shared_edges_list:
-                cell_status = self.CellNodesFeatureList[edge]
-
-                if cell_status == "None":
-                    unoccupied_index = edge  # Track an unoccupied cell index
-                elif cell_status == current_player_color:
-                    occupied_by_self = True  # Mark that a cell is occupied by the current player
                 else:
-                    occupied_by_opponent = edge  # Track opponent's occupied cell
-
-            # Determine the outcome based on occupancy status
-            if occupied_by_self:
-                # Return False if any shared edge cell is occupied by the current player's piece
-                print("disrupted_paths: One of the cells is occupied by the current player's piece.")
-                return None
-            elif occupied_by_opponent is not None and unoccupied_index is not None:
-                # Return the unoccupied cell index if only one cell is occupied by the opponent
-                print(f"disrupted_paths: Returning unoccupied cell index {unoccupied_index}.")
-                return unoccupied_index
-            elif occupied_by_opponent is not None and unoccupied_index is None:
-                # Both cells are occupied (by opponent or otherwise), return None
-                print("disrupted_paths: Both shared edge cells are occupied. Returning None.")
-                return None
-            else:
-                # No specific conditions met; return None as a default
-                print("disrupted_paths: No conditions met. Returning None.")
-                return None
+                    # No specific conditions met; return None as a default
+                    print("disrupted_paths: No conditions met. Returning None.")
+                    continue
 
     def switch_position_on_wall_contact(self, current_position):
         # Check if the current position itself is next to a wall
