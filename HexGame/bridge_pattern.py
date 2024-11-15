@@ -79,16 +79,16 @@ class BP:
     def get_next_move_with_AI(self):
         index = None
 
-
-
-
-        # Step A: Detect paths
+        ################
+        # Detect Paths #
+        ################
         self.detect_paths()
         print(f"get_next_move_with_AI: Detected paths, current RedPaths: {self.RedPaths}")
 
 
-
-        # Step 1: Set the starting position based on whether a disruption occurred
+        #################################################
+        # Check if disruption has occured previous move #
+        #################################################
         if self.previous_disruption:
             # Go back 4 moves if there was a previous disruption
             current_position = self.MoveList[-4]
@@ -98,16 +98,14 @@ class BP:
             # Default to the last move if no disruption
             current_position = self.MoveList[-2]
             print(f"get_next_move_with_AI: No disruption, current_position set to {current_position}")
-
         playerColor = self.CellNodesFeatureList[current_position]
         print(f"get_next_move_with_AI: Current position {current_position} before detect paths")
 
-
-        # Step B: Check for path disruption
+        ###################################
+        # Check if disruption has occured #
+        ###################################
         path_disruption = self.disrupted_paths()
         print(f"get_next_move_with_AI: path_disruption returned: {path_disruption}")
-
-        # Step C: Handle path disruption if detected
         if path_disruption is not None:
             print(f"get_next_move_with_AI: Path {self.RedPaths} has been disrupted at {path_disruption}")
             self.previous_disruption = True
@@ -116,26 +114,19 @@ class BP:
         else:
             self.previous_disruption = False
             print("get_next_move_with_AI: No path disruption detected.")
-
-
         print(f"get_next_move_with_AI: {current_position} after path_disruption and before winning path ")
 
+        ############################################################
+        # If winning path has been detected begin filling the gaps #
+        ############################################################
         filled_bp_index = self.winning_path()
         if filled_bp_index is not None:
             print(f"get_next_move_with_AI: The current winning {self.Current_Winning_Path} has an index filled at {filled_bp_index}")
             return filled_bp_index
-        #Step C
 
-
-
-        # Step C: If the current path touches a top or bottom, pick the current position on the opposite side to fully connect
-
-
-
-
-
-
-        #current_position = self.current_winning_path[-1] if self.current_winning_path else self.MoveList[-2]
+        #################################################################
+        # If was has been touched switch a non-touched wall in the path #
+        #################################################################
         new_position = self.switch_position_on_wall_contact(current_position)
         if new_position != current_position:
             print(f"get_next_move_with_AI: Updated current position from {current_position} to {new_position} after wall contact.")
@@ -143,11 +134,10 @@ class BP:
 
         print(f"get_next_move_with_AI: Current position before step 1 : {current_position}")
 
-        path_touching_wall = False  # Flag to check if the path touches a wall
-
+        ##############################################################################
+        # If Red AI makes first move as wall-adjacent go to detect and evaluate bridges #
+        ##############################################################################
         if playerColor == "Red":
-
-            # Step 1: If current position is touching a wall go to detect and evaluate bridge:
             if current_position < self.board_size:
                 print(f"get_next_move_with_AI STEP 1: Current Position {current_position} for red is next to top wall, go to evaluate bridge: ")
                 index = self.evaluate_bridge(current_position)
@@ -158,6 +148,9 @@ class BP:
                 index = self.evaluate_bridge(current_position)
                 return index
 
+        ##################################################################################
+        # If Blue AI makes first move as wall-adjacent go to detect and evaluate bridges #
+        ##################################################################################
         if playerColor == "Blue":
             if current_position % self.board_size == 0:
                 print(f"get_next_move_with_AI: STEP 1: Current Position {current_position} for blue is next to left wall, go to evaluate bridge: ")
@@ -169,36 +162,36 @@ class BP:
                 return index
 
 
-
         print(f"Current position before step 2 : {current_position}")
         print(f"get_next_move_with_AI: Current position before step 2 : {current_position}")
 
 
-
-
-        # Step 2: If a wall-adjacent neighbor is detected, return that neighbor as Index
+        ###############################################################################
+        # Checks if a neigbour is wall adjecent, then return that index as move index #
+        ###############################################################################
         neighbor_with_wall = self.detect_neighbours_is_with_wall(current_position)
         print(f"get_next_move_with_AI: STEP 2: Detected wall-adjacent neighbor: {neighbor_with_wall}")
-
         if neighbor_with_wall is not None and neighbor_with_wall not in self.MoveList:
             print(f"get_next_move_with_AI: STEP 2: Returning wall-adjacent neighbor {neighbor_with_wall} as the next move")
             return neighbor_with_wall  # End the function here if a wall-adjacent neighbor is found
-
         print("get_next_move_with_AI: STEP 2/3:  No wall-adjacent neighbors detected, proceeding to bridge detection")
 
 
-
-        # Step 3: Check if current position has detected bridges , if so evaluate them
+        ##################################
+        # Calls detetect bridge function #
+        ##################################
         self.detect_bridge(current_position)
-        possible_bridges = self.PossibleBridgesList[current_position]
 
-        if possible_bridges:  # Checks if possible_bridges is non-empty
+        #########################################################################################################
+        # If current position has detected bridge pattern, find best bridge pattern and return it as move index #
+        #########################################################################################################
+        possible_bridges = self.PossibleBridgesList[current_position]
+        if possible_bridges:
             print(f"get_next_move_with_AI: STEP 3:  All possible bridges detected in {current_position} are: {possible_bridges}, will now evaluate them to pick the best one.")
             index = self.evaluate_bridge(current_position)
             return index
         else:
             print("get_next_move_with_AI: STEP 3:  no bridgesfound , retuning index as none")
-
             index = None
 
         return index
