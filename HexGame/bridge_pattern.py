@@ -49,6 +49,7 @@ class BP:
         index = None
         paths = None
 
+
         if len(self.MoveList) < 2:
             print("\nget_next_move: Both players need to make at least one move")
             return None
@@ -77,6 +78,9 @@ class BP:
 
     def get_next_move_with_AI(self):
         index = None
+
+
+
 
         # Step A: Detect paths
         self.detect_paths()
@@ -336,16 +340,25 @@ class BP:
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
 
-        touching_top_wall = (pos < self.board_size for pos in self.Current_Winning_Path)
+        top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+        bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index >= self.board_size * (self.board_size - 1)]
 
-        # Check if any position in current_winning_path touches the bottom wall
-        touching_bottom_wall = (pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path)
 
-        print(f"winning_path: touching_top_wall {touching_top_wall}")
-        print(f"winning_path: touching_bottom_wall {touching_bottom_wall}")
+        touching_top_wall = False
+        for node in self.Current_Winning_Path:
+            if node in top_wall_nodes:
+                print(f"get_next_move: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_top_wall = True
+
+        touching_bot_wall = False
+        for node in self.Current_Winning_Path:
+            if node in bot_wall_nodes:
+                print(f"get_next_move: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_bot_wall = True
+
 
         # Combined condition to check if the path touches both the top and bottom walls
-        if touching_top_wall and touching_bottom_wall:
+        if touching_top_wall is True and touching_bot_wall is True:
             print(f"current_winning_path {self.Current_Winning_Path} is touching both the top and bottom walls.")
 
             # Confirm that the path is fully connected in a bridge pattern
@@ -389,6 +402,8 @@ class BP:
                         fill_bp_index = choice(shared_edges_list)
                         print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
                         return fill_bp_index
+
+
         return None
 
 
@@ -513,30 +528,45 @@ class BP:
         neighbours = self.all_edges[current_position]  # Use [] to index, not ()
 
         # Determine if the current position is part of a path that already has a top or bottom wall connection
-        has_top_wall_touching = False
-        has_bottom_wall_touching = False
+        touching_top_wall = False
+        touching_bot_wall = False
 
         # Check the Red_Paths for wall touching nodes
         for path in self.RedPaths:
             if current_position in path:
-                # Check if any element in the path touches the top or bottom wall
-                has_top_wall_touching = any(node < self.board_size for node in path)
-                has_bottom_wall_touching = any(node >= self.board_size * (self.board_size - 1) for node in path)
+                top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+                bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index >= self.board_size * (self.board_size - 1)]
+
+
+                for node in self.Current_Winning_Path:
+                    if node in top_wall_nodes:
+                        print(
+                            f"switch_position_on_wall_contact: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                        touching_top_wall = True
+
+
+                for node in self.Current_Winning_Path:
+                    if node in bot_wall_nodes:
+                        print(
+                            f"switch_position_on_wall_contact: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                        touching_bot_wall = True
+
                 break
+
 
         # Collect neighbors that are touching the top or bottom wall
         wall_adjacent_neighbors = []
         for neighbor in neighbours:
 
             if neighbor < self.board_size:
-                if not has_top_wall_touching:
+                if touching_top_wall is False:
                     print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
                     print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the top wall, but a top wall touching index already exists in the path. Skipping.")
 
             elif neighbor >= self.board_size * (self.board_size - 1):
-                if not has_bottom_wall_touching:
+                if touching_bot_wall is False:
                     print(f"switch_position_on_wall_contact: Neighbor {neighbor} is touching the bottom wall.")
                     wall_adjacent_neighbors.append(neighbor)
                 else:
@@ -556,16 +586,30 @@ class BP:
         # Check if current_position is part of a path that already touches the top wall
         #        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
         if playerColor == "Red":
-            in_top_wall_path = (pos < self.board_size for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
-            in_bot_wall_path = (pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
 
-            if in_top_wall_path:
+            top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+            bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index >= self.board_size * (self.board_size - 1)]
+
+            touching_top_wall = False
+            for node in self.Current_Winning_Path:
+                if node in top_wall_nodes:
+                    print(f"detect_neighbours_is_with_wall: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_top_wall = True
+
+            touching_bot_wall = False
+            for node in self.Current_Winning_Path:
+                if node in bot_wall_nodes:
+                    print(f"detect_neighbours_is_with_wall: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_bot_wall = True
+
+
+            if touching_top_wall is True:
                 print(
                     f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
                 return None  # Skip adding wall-adjacent neighbors if already touching the top wall
 
 
-            if in_bot_wall_path:
+            if touching_bot_wall is True:
                 print(
                     f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
                 return None  # Skip adding wall-adjacent neighbors if already touching the top wall
@@ -707,17 +751,36 @@ class BP:
         if not bridge_patterns:
             print(f"evaluate_bridge: No bridge patterns found in PossibleBridgesList")
 
-        # Determine if current_position is part of the winning path and if that path touches the top wall
-        in_winning_path = current_position in self.Current_Winning_Path if hasattr(self, 'current_winning_path') else False
-        path_touches_top_wall = any(pos < self.board_size for pos in self.Current_Winning_Path) if in_winning_path else False
-        path_touches_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path) if in_winning_path else False
+        # Check if any position in current_winning_path touches the top wall
+
+        top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+        bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index >= self.board_size * (self.board_size - 1)]
+
+
+        touching_top_wall = False
+        for node in self.Current_Winning_Path:
+            if node in top_wall_nodes:
+                print(f"evaluate_bridge: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_top_wall = True
+
+        touching_bot_wall = False
+        for node in self.Current_Winning_Path:
+            if node in bot_wall_nodes:
+                print(f"evaluate_bridge: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                touching_bot_wall = True
+
+
+        # Combined condition to check if the path touches both the top and bottom walls
+        if touching_top_wall is True and touching_bot_wall is True:
+            print(f"evaluate_bridge: {self.Current_Winning_Path} is touching both the top and bottom walls.")
+
 
         if bridge_patterns:
             if self.CellNodesFeatureList[current_position] == "Red":
                 print(f"Evaluate bridge happening from {self.CellNodesFeatureList[current_position]}")
 
                 # Filter out bridge patterns that would lead to top wall positions if the path touches the top wall
-                if path_touches_top_wall:
+                if touching_top_wall is True:
                     print(f"evaluate_bridge: hei Path containing {current_position} touches the top wall. Filtering out bridges to top wall positions.")
                     bridge_patterns = [pos for pos in bridge_patterns if pos >= self.board_size]
 
@@ -728,7 +791,7 @@ class BP:
                     print(f"evaluate_bridge: hei Selected highest index pattern: {selected_pattern} from possible patterns {sorted_patterns}")
 
                 # Prioritize lowest bridge pattern for upward movement if path touches the bottom wall
-                elif path_touches_bottom_wall:
+                elif touching_bot_wall is True:
                     print(f"evaluate_bridge: hei Path containing {current_position} touches the bottom wall. Prioritizing the lowest bridge pattern for upward movement.")
                     selected_pattern = min(bridge_patterns)  # Choose the bridge pattern with the lowest index
                     print(f"evaluate_bridge: hei Selected lowest index pattern: {selected_pattern} from possible patterns {bridge_patterns}")
@@ -825,6 +888,11 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
+
+
+
+
 
 
 
