@@ -6,13 +6,13 @@ from numba.cuda import detect
 
 class BP:
 
-    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, red_path, move_list, All_Edges,  RedAI, BlueAI, red_bp):
+    def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list,  current_winning_path, red_path, move_list, All_Edges,  RedAI, BlueAI, red_bp):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
         self.redAI = RedAI
         self.blueAI = BlueAI
-        self.previous_disruption = False
+        self.not_previous_disruption = True
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -41,7 +41,7 @@ class BP:
 
         self.red_edges_mapping = [[] for _ in range(self.board_size * self.board_size)]
 
-        self.current_winning_path = []
+        self.Current_Winning_Path = current_winning_path
 
         return
 
@@ -83,14 +83,14 @@ class BP:
         current_position = self.MoveList[-2]
 
         # Step 1: Set the starting position based on whether a disruption occurred
-        if self.previous_disruption and len(self.MoveList) >= 4:
+        if self.not_previous_disruption:
             # Go back 4 moves if there was a previous disruption
-            current_position = self.MoveList[-4]
-            print(
-                f"get_next_move_with_AI: Adjusting position due to disruption, current_position set to {current_position}")
+            current_position = self.MoveList[-2]
+            print(f"get_next_move_with_AI: Adjusting position due to disruption, current_position set to {current_position}")
+            self.not_previous_disruption = True
         else:
             # Default to the last move if no disruption
-            current_position = self.MoveList[-2]
+            current_position = self.MoveList[-4]
             print(f"get_next_move_with_AI: No disruption, current_position set to {current_position}")
 
         playerColor = self.CellNodesFeatureList[current_position]
@@ -305,7 +305,7 @@ class BP:
             # Step: Find the path with the longest top-to-bottom coverage
             longest_path = None
             max_coverage = 0
-            self.current_winning_path = []
+            self.Current_Winning_Path = []
 
             for path in self.RedPaths:
                 if path:
@@ -322,11 +322,11 @@ class BP:
 
             # Print the path with the longest top-to-bottom coverage
             if longest_path is not None:
-                self.current_winning_path = longest_path
+                self.Current_Winning_Path = longest_path
                 print(f"\ndetect_paths: The path with the longest top-to-bottom coverage is: {longest_path} with coverage of {max_coverage}")
             else:
                 print("\ndetect_paths: No valid paths found.")
-                self.current_winning_path = []
+                self.Current_Winning_Path = []
 
 
 
@@ -338,17 +338,59 @@ class BP:
 
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
-        touching_top_wall = any(pos < self.board_size for pos in self.current_winning_path)
+        touching_top_wall = any(pos < self.board_size for pos in self.Current_Winning_Path)
 
         # Check if any position in current_winning_path touches the bottom wall
-        touching_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path)
+        touching_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path)
 
         # Combined condition to check if the path touches both the top and bottom walls
         if touching_top_wall and touching_bottom_wall:
-            print("current_winning_path is touching both the top and bottom walls.")
+            print(f"current_winning_path {self.Current_Winning_Path} is touching both the top and bottom walls.")
 
-        else:
-            print("current_winning_path is not touching both walls.")
+            # Confirm that the path is fully connected in a bridge pattern
+            fully_connected = True
+            for i in range(len(self.Current_Winning_Path) - 1):
+                node_a = self.Current_Winning_Path[i]
+                node_b = self.Current_Winning_Path[i + 1]
+
+                # Find shared edges (bridge connections) between node_a and node_b
+                neighbors_a = set(self.red_edges_mapping[node_a])
+                neighbors_b = set(self.red_edges_mapping[node_b])
+                shared_edges = neighbors_a.intersection(neighbors_b)
+                shared_edges_list = list(shared_edges)
+
+                print(f"winning_path: shared_edges_list: {shared_edges_list}")
+
+                # Check if there are at least two shared edges to form a valid bridge
+                if len(shared_edges_list) < 2:
+                    print("winning_path: Not enough shared edges to form a bridge pattern.")
+                    fully_connected = False
+                    break
+
+                # Confirm mutual connection in the all_edges map
+                if (shared_edges_list[0] not in self.all_edges[shared_edges_list[1]] or
+                        shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]):
+                    print("winning_path: This is not a bridge pattern; disruption detected.")
+                    fully_connected = False
+                    break
+
+            # If fully connected, then proceed to fill
+            if fully_connected:
+                for i in range(len(self.Current_Winning_Path) - 1):
+                    node_a = self.Current_Winning_Path[i]
+                    node_b = self.Current_Winning_Path[i + 1]
+                    neighbors_a = set(self.red_edges_mapping[node_a])
+                    neighbors_b = set(self.red_edges_mapping[node_b])
+                    shared_edges = neighbors_a.intersection(neighbors_b)
+                    shared_edges_list = list(shared_edges)
+
+                    if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and
+                            self.CellNodesFeatureList[shared_edges_list[1]] == "None"):
+                        fill_bp_index = choice(shared_edges_list)
+                        print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
+                        return fill_bp_index
+
+        return None
 
 
 
@@ -511,8 +553,8 @@ class BP:
         # Check if current_position is part of a path that already touches the top wall
         #        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
         if playerColor == "Red":
-            in_top_wall_path = any(pos < self.board_size for pos in self.current_winning_path if current_position in self.current_winning_path)
-            in_bot_wall_path = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path if current_position in self.current_winning_path)
+            in_top_wall_path = any(pos < self.board_size for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
+            in_bot_wall_path = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
 
             if in_top_wall_path:
                 print(
@@ -661,9 +703,9 @@ class BP:
             print(f"evaluate_bridge: No bridge patterns found in PossibleBridgesList")
 
         # Determine if current_position is part of the winning path and if that path touches the top wall
-        in_winning_path = current_position in self.current_winning_path if hasattr(self,'current_winning_path') else False
-        path_touches_top_wall = any(pos < self.board_size for pos in self.current_winning_path) if in_winning_path else False
-        path_touches_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.current_winning_path) if in_winning_path else False
+        in_winning_path = current_position in self.Current_Winning_Path if hasattr(self, 'current_winning_path') else False
+        path_touches_top_wall = any(pos < self.board_size for pos in self.Current_Winning_Path) if in_winning_path else False
+        path_touches_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path) if in_winning_path else False
 
         if bridge_patterns:
             if self.CellNodesFeatureList[current_position] == "Red":
@@ -778,6 +820,7 @@ class BP:
         elif current_position >= self.board_size * (self.board_size - 1):
             return True
         return False
+
 
 
 
