@@ -437,10 +437,10 @@ class BP:
                             print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
                             continue
 
-                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[shared_edges_list[1]] == "Red"):
+                        if self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[shared_edges_list[1]] == "Red":
                             continue
 
-                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[shared_edges_list[1]] == "None"):
+                        if self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[shared_edges_list[1]] == "None":
                             fill_bp_index = choice(shared_edges_list)
                             print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
                             return fill_bp_index
