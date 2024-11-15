@@ -1,7 +1,5 @@
 from random import choice
 
-from jinja2.nodes import Break
-from numba.cuda import detect
 
 
 class BP:
@@ -12,7 +10,7 @@ class BP:
         self.Winner = None
         self.redAI = RedAI
         self.blueAI = BlueAI
-        self.not_previous_disruption = True
+        self.previous_disruption = False
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -83,14 +81,14 @@ class BP:
         current_position = self.MoveList[-2]
 
         # Step 1: Set the starting position based on whether a disruption occurred
-        if self.not_previous_disruption:
+        if self.previous_disruption:
             # Go back 4 moves if there was a previous disruption
-            current_position = self.MoveList[-2]
+            current_position = self.MoveList[-4]
             print(f"get_next_move_with_AI: Adjusting position due to disruption, current_position set to {current_position}")
-            self.not_previous_disruption = True
+            self.previous_disruption = True
         else:
             # Default to the last move if no disruption
-            current_position = self.MoveList[-4]
+            current_position = self.MoveList[-2]
             print(f"get_next_move_with_AI: No disruption, current_position set to {current_position}")
 
         playerColor = self.CellNodesFeatureList[current_position]
@@ -114,27 +112,13 @@ class BP:
             self.previous_disruption = False
             print("get_next_move_with_AI: No path disruption detected.")
 
-        path_disruption = self.disrupted_paths()
-        # Step B: If the current winning path has any disruption, fix it  (I NEED TO DETERMINE CURRENT WINNING PATH)
-        if path_disruption is not None:
-            print(f"get_next_move_with_AI: The path {self.RedPaths} has in fact been disrupted")
-            self.previous_disruption = True
-            return path_disruption
-        else:
-            self.previous_disruption = False
-
 
         print(f"get_next_move_with_AI: {current_position} after path_disruption and before winning path ")
 
-        self.winning_path()
-
-        """
         filled_bp_index = self.winning_path()
-
         if filled_bp_index is not None:
-            print(f"get_next_move_with_AI: The current winning {self.current_winning_path} has an index filled at {filled_bp_index}")
+            print(f"get_next_move_with_AI: The current winning {self.Current_Winning_Path} has an index filled at {filled_bp_index}")
             return filled_bp_index
-        """
         #Step C
 
 
@@ -338,10 +322,10 @@ class BP:
 
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
-        touching_top_wall = any(pos < self.board_size for pos in self.Current_Winning_Path)
+        touching_top_wall = (pos < self.board_size for pos in self.Current_Winning_Path)
 
         # Check if any position in current_winning_path touches the bottom wall
-        touching_bottom_wall = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path)
+        touching_bottom_wall = (pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path)
 
         # Combined condition to check if the path touches both the top and bottom walls
         if touching_top_wall and touching_bottom_wall:
@@ -368,8 +352,7 @@ class BP:
                     break
 
                 # Confirm mutual connection in the all_edges map
-                if (shared_edges_list[0] not in self.all_edges[shared_edges_list[1]] or
-                        shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]):
+                if (shared_edges_list[0] not in self.all_edges[shared_edges_list[1]] or shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]):
                     print("winning_path: This is not a bridge pattern; disruption detected.")
                     fully_connected = False
                     break
@@ -389,7 +372,6 @@ class BP:
                         fill_bp_index = choice(shared_edges_list)
                         print(f"winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
                         return fill_bp_index
-
         return None
 
 
@@ -422,19 +404,24 @@ class BP:
 
 
                 print(f"disrupted_paths: Shared edges list: {shared_edges_list}")
+                print(f"disrupted_paths: Length of Shared edges list: {len(shared_edges_list)}")
+
                 print(f"disrupted_paths: Self.all_edges[[shared_edges_list[0]]]: {self.all_edges[shared_edges_list[0]]}")
-                print(f"disrupted_paths: Self.all_edges[[shared_edges_list[1]]]: {self.all_edges[shared_edges_list[1]]}")
 
+                if len(shared_edges_list) < 1:
+                    print(f"disrupted_paths: Self.all_edges[[shared_edges_list[1]]]: {self.all_edges[shared_edges_list[1]]}")
 
-                # If the first index in shared_edges_list is an edge for second shared_edges_list index
-                if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
-                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
-                    return None
+                if len(shared_edges_list) < 1:
+                    # If the first second in shared_edges_list is not an edge for first shared_edges_list index
+                    if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
+                        print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                        return None
 
-                # If the first second in shared_edges_list is an edge for first shared_edges_list index
-                if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
-                    print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
-                    return None
+                if len(shared_edges_list) < 1:
+                    # If the first index in shared_edges_list is not an edge for second shared_edges_list index
+                    if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                        print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                        return None
 
                 # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
                 for edge in shared_edges_list:
@@ -553,8 +540,8 @@ class BP:
         # Check if current_position is part of a path that already touches the top wall
         #        if playerColor == "Red" and hasattr(self, 'current_winning_path'):
         if playerColor == "Red":
-            in_top_wall_path = any(pos < self.board_size for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
-            in_bot_wall_path = any(pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
+            in_top_wall_path = (pos < self.board_size for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
+            in_bot_wall_path = (pos >= self.board_size * (self.board_size - 1) for pos in self.Current_Winning_Path if current_position in self.Current_Winning_Path)
 
             if in_top_wall_path:
                 print(
@@ -566,6 +553,8 @@ class BP:
                 print(
                     f"detect_neighbours_is_with_wall: Current position {current_position} is in a path that already touches the top wall. Skipping wall-adjacent neighbors.")
                 return None  # Skip adding wall-adjacent neighbors if already touching the top wall
+       
+       
         if playerColor == "Red":
             for neighbor in neighbours:
                 #if neighbours are touching the top wall , append those neighbours indexes in wall_adjacent_neighbours
