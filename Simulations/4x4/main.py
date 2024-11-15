@@ -337,7 +337,30 @@ for i in range(tm.number_of_clauses):
     print(" AND ".join(l))
     print(f"Number of literals: {len(l)}")
 
-plotting.double_plot(values_1=accuracy_train_epochs, values_2=accuracy_test_epochs, x_label="Epoch", y_label="%", title_name="Training & Test Accuracy", file_name=csvName+"AccuractValues", labels=["Train", "Test"])
+plotting.double_plot(values_1=accuracy_train_epochs, 
+                     values_2=accuracy_test_epochs, 
+                     x_label="Epoch", y_label="%", 
+                     title_name="Training & Test Accuracy", 
+                     file_name=csvName+"AccuractValues", 
+                     labels=["Train", "Test"], 
+                     kvalue1=avg_accuracy_train, 
+                     kvalue2=avg_accuracy_test
+                    )
 
-plotting.double_plot(values_1=time_training_epochs, values_2=time_testing_epochs, x_label="Epoch", y_label="sec", title_name="Training & Test Time", file_name=csvName+"TimeValues", labels=["Train", "Test"])
+plotting.double_plot(values_1=time_training_epochs, 
+                     values_2=time_testing_epochs, 
+                     x_label="Epoch", y_label="sec", 
+                     title_name="Training & Test Time", 
+                     file_name=csvName+"TimeValues", 
+                     labels=["Train", "Test"], 
+                     kvalue1=avg_training_time, 
+                     kvalue2=avg_testing_time
+                    )
+
+plotting.plot_moves_distribution(simulation_train=Simulation_Train, 
+                                 simulation_test=Simulation_Test, 
+                                 title_name="Move Distribution", 
+                                 x_label="Moves", y_label="Frequency", 
+                                 file_name=csvName+"MoveDistribution"
+                                )
 
