@@ -278,7 +278,7 @@ class Game:
         return
 
     def SimulateGame(self, goBack, randomMoves):
-        print("SimulateGame started")  # Debug print to confirm function call
+        #print("SimulateGame started")  # Debug print to confirm function call
         condition = True
 
         while condition:
@@ -603,10 +603,4 @@ class Game:
             if self.Winner is not None:
                 condition = False
         self.returnTurns(goBack, False)
-        return self.Winner, self.CellNodesFeatureList, self.all_edges
-
-
-game =  Game(6)
-
-
-game.SimulateGame(0, randomMoves=False)
+        return self.Winner, self.CellNodesFeatureList, self.MoveList

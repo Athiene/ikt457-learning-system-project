@@ -132,7 +132,7 @@ def filterData(simulation_data):
         f"Testing Data - Amount RED Wins: {len(np.where(Y_test == 0)[0])}, BLUE Wins: {len(np.where(Y_test == 1)[0])}")
     return Simulation_Test, Simulation_Train
 
-def fetch_simulation_games(number, gameboard_size, goBack, randomMoves):
+def fetch_simulation_games(number, gameboard_size, goBack, randomMoves, maxMoves=None):
     red_data = []  # List to collect "Red" results
     blue_data = []  # List to collect "Blue" results
     existing_games = set()
@@ -140,7 +140,11 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves):
 
     while len(red_data) < number or len(blue_data) < number:
         new_game = game.Game(gameboard_size)
-        winner, feature = new_game.SimulateGame(goBack, randomMoves)
+        winner, feature, moveList = new_game.SimulateGame(goBack, randomMoves)
+        # Check the amount of moves
+        if maxMoves is not None:
+            if len(moveList) > maxMoves:
+                continue
         # Check if winner is Red or Blue
         if winner == "0" and len(red_data) < number:
             red_data.append((winner, feature))
@@ -148,13 +152,13 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves):
             blue_data.append((winner, feature))
     return red_data + blue_data
 
-def createData(gameboard_size, csvName, number_of_examples, go_back, random_moves):
+def createData(gameboard_size, csvName, number_of_examples, go_back, random_moves, maxMoves):
     if os.path.isfile(csvName + "_test_data.csv") or os.path.isfile(csvName + "_training_data.csv"):
         print("Dataset with the same name already exists!")
         print("Exiting...")
         exit()
 
-    data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=go_back, randomMoves=random_moves)
+    data = fetch_simulation_games(number=number_of_examples, gameboard_size=gameboard_size, goBack=go_back, randomMoves=random_moves, maxMoves=maxMoves)
     createCSV_noSimulation(data, csvName)
     test_data, training_data = filterData(simulation_data=data)
     createCSV_noSimulation(test_data, csvName+"_test_data")
