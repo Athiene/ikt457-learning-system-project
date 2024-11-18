@@ -88,7 +88,7 @@ def plot_moves_distribution(simulation_train, simulation_test, title_name, x_lab
     for game in simulation_train:
         moveCount = 0
         for feature in game[1]:
-            if feature is "None":
+            if feature == "None":
                 continue
             moveCount += 1
         total_moves_train.append(moveCount)
@@ -97,7 +97,7 @@ def plot_moves_distribution(simulation_train, simulation_test, title_name, x_lab
     for game in simulation_test:
         moveCount = 0
         for feature in game[1]:
-            if feature is "None":
+            if feature == "None":
                 continue
             moveCount += 1
         total_moves_test.append(moveCount)
