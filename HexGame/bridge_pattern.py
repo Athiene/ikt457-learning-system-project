@@ -4,7 +4,7 @@ from random import choice
 class BP:
 
     def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, current_winning_path, red_path, move_list,
-                 All_Edges, RedAI, BlueAI, red_bp):
+                 All_Edges, RedAI, BlueAI, red_bp, blue_bp, blue_path):
         self.board_size = size
         self.Player1 = True
         self.Winner = None
@@ -24,6 +24,8 @@ class BP:
         # A single array in this list of arrays represents a path for player red
         self.RedPaths = red_path
 
+        self.BluePaths = blue_path
+
         # Array that contains a moves done
         self.MoveList = move_list
 
@@ -33,10 +35,14 @@ class BP:
         self.PossibleBridgesList = [[] for _ in range(self.board_size * self.board_size)]
 
         self.Red_Bp = red_bp
-
-        self.Blue_Bp = [[] for _ in range(self.board_size * self.board_size)]
+        
+        self.Blue_Bp = blue_bp
 
         self.red_edges_mapping = [[] for _ in range(self.board_size * self.board_size)]
+
+
+        self.blue_edges_mapping = [[] for _ in range(self.board_size * self.board_size)]
+
 
         self.Current_Winning_Path = current_winning_path
 
@@ -244,11 +250,14 @@ class BP:
         return None
 
     def detect_paths(self):
+        # Changes the cells to corresponding player color: Red or Blue
         if self.Player1:
-            current_player_color = "Red"
-        else:
             current_player_color = "Blue"
+        else:
+            current_player_color = "Red"
+         
 
+            
         if current_player_color == "Red":
             # Get all red indexes from CellNodesFeatureList
             red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
@@ -364,6 +373,142 @@ class BP:
             # Final output of all unique paths
             print("\ndetect_paths: Final Red paths with unique pairs:")
             print(self.RedPaths)
+
+
+
+        if current_player_color == "Blue":
+            # Get all red indexes from CellNodesFeatureList
+            blue_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Blue"]
+            print(f"detect_paths: All the blue indexes in CellNodeFeatureList are at: {blue_indexes}")
+
+        
+            # For loop going through all blue indexes and getting their edges
+            for blue_index in blue_indexes:
+                blue_edges = self.all_edges[blue_index]
+                self.blue_edges_mapping[blue_index] = list(blue_edges)
+
+            # Prints out all the red indexes with their corresponding edges from the list red_edges_mapping
+            print("\ndetect_paths: Blue indexes with their edges:")
+            for index, edges in enumerate(self.blue_edges_mapping):
+                if edges:  # Only print non-empty entries for clarity
+                    print(f"detect_paths: Index {index}: {edges}")
+
+
+            # Check for paths between each pair of red nodes
+            print("\ndetect_paths: Paths between blue nodes:")
+
+
+            for i, red_index in enumerate(blue_indexes):
+                edges_for_index_i = set(self.blue_edges_mapping[blue_index])
+                print(f"\ndetect_paths: Current Position being evaluated: {blue_index} for bLUE")
+                print(f"detect_paths: Edges for blue index {blue_index}: {edges_for_index_i}")
+
+
+                # Compare with subsequent red indexes to check for paths
+                for j in range(i + 1, len(blue_indexes)):
+                    next_blue_index = blue_indexes[j]
+
+                    edges_for_next_index = set(self.blue_edges_mapping[next_blue_index])
+
+                    # Find common edges between blue_index and next_blue_index
+
+                    # Handle direct adjacency connection (neighboring nodes)
+
+                    if next_blue_index in edges_for_index_i:
+                        print( f"detect_paths: Bonded path exists between blue index {blue_index} and blue index {blue_index} (neighbors).")
+                        path_found = False
+
+
+                       # Search for existing path that includes red_index or next_red_index
+                        for path in self.BluePaths:
+                            if blue_index in path or next_blue_index in path:
+                                # Extend the existing path with any new unique nodes
+                                if blue_index not in path:
+                                    path.append(blue_index)
+                                if next_blue_index not in path:
+                                    path.append(next_blue_index)
+                                path_found = True
+                                print(f"detect_paths: Added {blue_index} and {next_blue_index} to existing path: {path}")
+                                break
+
+                        # If no path was found, create a new separate path for these connected nodes
+                        if not path_found:
+                            self.BluePaths.append([blue_index, next_blue_index])
+                            print(f"detect_paths: Created new path: [{blue_index}, {next_blue_index}]")
+
+
+
+                    shared_edges = edges_for_index_i.intersection(edges_for_next_index)
+                    shared_edges_list = list(shared_edges)
+
+                    if len(shared_edges_list) == 2:
+                        print(f"detect_paths: Shared edges: {shared_edges_list}")
+
+                        cell_status_1 = self.CellNodesFeatureList[shared_edges_list[0]]
+                        cell_status_2 = self.CellNodesFeatureList[shared_edges_list[1]]
+        
+
+
+                        if cell_status_1 == "None" and cell_status_2 == "None":
+
+                            path_found = False
+
+                            # Search for an existing path that includes red_index or next_red_index
+                            for path in self.BluePaths:
+                                if blue_index in path or next_blue_index in path:
+                                    # Extend the existing path with any new unique nodes
+                                    if blue_index not in path:
+                                        path.append(blue_index)
+                                    if next_blue_index not in path:
+                                        path.append(next_blue_index)
+                                    path_found = True
+                                    break
+
+                            # If no path was found, create a new separate path for these nodes
+                            if not path_found:
+                                self.BluePaths.append([blue_index, next_blue_index])
+                                print(f"detect_paths: Created new path: [{blue_index}, {next_blue_index}]")
+
+
+            # Step: Find the path with the longest top-to-bottom coverage
+            longest_path = None
+            max_coverage = 0
+            self.Current_Winning_Path = []
+
+
+            for path in self.BluePaths:
+                if path:
+                    min_index = min(path)
+                    max_index = max(path)
+                    coverage = max_index - min_index
+
+                    print(
+                        f"detect_paths: Evaluating path {path}: min index = {min_index}, max index = {max_index}, coverage = {coverage}")
+
+                    # Update if this path has the longest coverage seen so far
+                    if coverage > max_coverage:
+                        max_coverage = coverage
+                        longest_path = path
+
+
+
+
+            # Print the path with the longest top-to-bottom coverage
+            if longest_path is not None:
+                self.Current_Winning_Path = longest_path
+                print(
+                    f"\ndetect_paths: The path with the longest top-to-bottom coverage is: {longest_path} with coverage of {max_coverage}")
+            else:
+                print("\ndetect_paths: No valid paths found.")
+                self.Current_Winning_Path = []
+
+            # Final output of all unique paths
+            print("\ndetect_paths: Final Blue paths with unique pairs:")
+            print(self.BluePaths)
+
+
+
+
 
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
