@@ -4,9 +4,9 @@ from random import choice
 class BP:
 
     def __init__(self, size, cell_node_feature_list, cell_nodes_edge_list, current_winning_path, red_path, move_list,
-                 All_Edges, RedAI, BlueAI, red_bp, blue_bp, blue_path):
+                 All_Edges, RedAI, BlueAI, red_bp, blue_bp, blue_path, playerColor):
         self.board_size = size
-        self.Player1 = True
+        self.Player1 = playerColor
         self.Winner = None
         self.redAI = RedAI
         self.blueAI = BlueAI
@@ -214,55 +214,88 @@ class BP:
 
     def opposite_wall_cloesest_index(self, current_position):
 
-        neighbours = self.all_edges[current_position]
 
-        print(f"opposite_wall_cloesest_index: neighbours for {current_position}: {neighbours}")
+        if self.Player1:
+            neighbours = self.all_edges[current_position]
 
-        top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
-        bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if
-                          index >= self.board_size * (self.board_size - 1)]
+            print(f"opposite_wall_cloesest_index: neighbours for {current_position}: {neighbours}")
 
-        touching_top_wall = False
-        for node in self.Current_Winning_Path:
-            if node in top_wall_nodes:
-                print(
-                    f"opposite_wall_cloesest_index: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
-                touching_top_wall = True
+            top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+            bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if
+                            index >= self.board_size * (self.board_size - 1)]
 
-        touching_bot_wall = False
-        for node in self.Current_Winning_Path:
-            if node in bot_wall_nodes:
-                print(
-                    f"opposite_wall_cloesest_index: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
-                touching_bot_wall = True
+            touching_top_wall = False
+            for node in self.Current_Winning_Path:
+                if node in top_wall_nodes:
+                    print(
+                        f"opposite_wall_cloesest_index: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_top_wall = True
 
-        if touching_bot_wall is True:
-            lowest_neighbour = min(neighbours)
-            if self.CellNodesFeatureList[lowest_neighbour] == "None":
-                index = lowest_neighbour
-                print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to top wall ")
-                return index
+            touching_bot_wall = False
+            for node in self.Current_Winning_Path:
+                if node in bot_wall_nodes:
+                    print(
+                        f"opposite_wall_cloesest_index: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_bot_wall = True
 
-        if touching_top_wall is True:
-            highest_neighbour = max(neighbours)
-            if self.CellNodesFeatureList[highest_neighbour] == "None":
-                index = highest_neighbour
-                print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to bot wall ")
-                return index
+            if touching_bot_wall is True:
+                lowest_neighbour = min(neighbours)
+                if self.CellNodesFeatureList[lowest_neighbour] == "None":
+                    index = lowest_neighbour
+                    print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to top wall ")
+                    return index
 
+            if touching_top_wall is True:
+                highest_neighbour = max(neighbours)
+                if self.CellNodesFeatureList[highest_neighbour] == "None":
+                    index = highest_neighbour
+                    print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to bot wall ")
+                    return index
+
+
+
+        else:
+
+            left_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index % self.board_size == 0]
+            right_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index % self.board_size == self.board_size - 1]
+
+            touching_left_wall = False
+            for node in self.Current_Winning_Path:
+                if node in left_wall_nodes:
+                    print(f"opposite_wall_cloesest_index: left_wall_nodes: {left_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_left_wall = True
+
+            touching_right_wall = False
+            for node in self.Current_Winning_Path:
+                if node in right_wall_nodes:
+                    print(f"opposite_wall_cloesest_index: right_wall_nodes: {right_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_right_wall = True
+
+            if touching_right_wall is True:
+                right_neighbour = current_position + 1
+                if self.CellNodesFeatureList[right_neighbour] == "None":
+                    index = right_neighbour
+                    print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to left wall ")
+                    return index
+
+            if touching_left_wall is True:
+                left_neighbour = current_position - 1
+                if self.CellNodesFeatureList[left_neighbour] == "None":
+                    index = left_neighbour
+                    print(f"opposite_wall_cloesest_index: chose {index} as move since its closest to right wall ")
+                    return index
+                
         return None
+
+
+
+
 
     def detect_paths(self):
         # Changes the cells to corresponding player color: Red or Blue
-        if self.Player1:
-            current_player_color = "Blue"
-            print(f"detect_paths: Current player is Blue")
-        else:
-            current_player_color = "Red"
-         
 
             
-        if current_player_color == "Red":
+        if self.Player1:
             # Get all red indexes from CellNodesFeatureList
             red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
             print(f"detect_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
@@ -380,7 +413,7 @@ class BP:
 
 
 
-        if current_player_color == "Blue":
+        else:
             # Get all red indexes from CellNodesFeatureList
             blue_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Blue"]
             print(f"detect_paths: All the blue indexes in CellNodeFeatureList are at: {blue_indexes}")
@@ -517,66 +550,130 @@ class BP:
 
     def winning_path(self):
         # Check if any position in current_winning_path touches the top wall
+        if self.Player1: 
+            top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
+            bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if
+                            index >= self.board_size * (self.board_size - 1)]
 
-        top_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index < self.board_size]
-        bot_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if
-                          index >= self.board_size * (self.board_size - 1)]
+            touching_top_wall = False
+            for node in self.Current_Winning_Path:
+                if node in top_wall_nodes:
+                    print(
+                        f"current_winning_path: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_top_wall = True
 
-        touching_top_wall = False
-        for node in self.Current_Winning_Path:
-            if node in top_wall_nodes:
-                print(
-                    f"current_winning_path: top_wall_nodes: {top_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
-                touching_top_wall = True
+            touching_bot_wall = False
+            for node in self.Current_Winning_Path:
+                if node in bot_wall_nodes:
+                    print(
+                        f"current_winning_path: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_bot_wall = True
 
-        touching_bot_wall = False
-        for node in self.Current_Winning_Path:
-            if node in bot_wall_nodes:
-                print(
-                    f"current_winning_path: bot_wall_nodes: {bot_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
-                touching_bot_wall = True
-
-        # Combined condition to check if the path touches both the top and bottom walls
-        if touching_top_wall is True and touching_bot_wall is True:
-            print(f"current_winning_path {self.Current_Winning_Path} is touching both the top and bottom walls.")
+            # Combined condition to check if the path touches both the top and bottom walls
+            if touching_top_wall is True and touching_bot_wall is True:
+                print(f"current_winning_path {self.Current_Winning_Path} is touching both the top and bottom walls.")
 
 
 
-            # Confirm that the path is fully connected in a bridge pattern
-            fully_connected = True
+                # Confirm that the path is fully connected in a bridge pattern
+                fully_connected = True
 
-            for i in range(len(self.Current_Winning_Path)):
-                for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
-                    node_a = self.Current_Winning_Path[i]
-                    node_b = self.Current_Winning_Path[j]
+                for i in range(len(self.Current_Winning_Path)):
+                    for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
+                        node_a = self.Current_Winning_Path[i]
+                        node_b = self.Current_Winning_Path[j]
 
-                    # Find shared edges (bridge connections) between node_a and node_b
-                    neighbors_a = set(self.red_edges_mapping[node_a])
-                    neighbors_b = set(self.red_edges_mapping[node_b])
-                    shared_edges = neighbors_a.intersection(neighbors_b)
-                    shared_edges_list = list(shared_edges)
+                        # Find shared edges (bridge connections) between node_a and node_b
+                        neighbors_a = set(self.red_edges_mapping[node_a])
+                        neighbors_b = set(self.red_edges_mapping[node_b])
+                        shared_edges = neighbors_a.intersection(neighbors_b)
+                        shared_edges_list = list(shared_edges)
 
-                    print(f"current_winning_path: shared_edges_list: {shared_edges_list}")
-                    # If fully connected, then proceed to fill
-                    if fully_connected:
+                        print(f"current_winning_path: shared_edges_list: {shared_edges_list}")
+                        # If fully connected, then proceed to fill
+                        if fully_connected:
 
-                        if len(shared_edges_list) <= 1:
-                            continue
-
-                        if len(shared_edges_list) == 2:
-                            if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
-                                print("current_winning_path: This is not a bridge pattern")
+                            if len(shared_edges_list) <= 1:
                                 continue
 
-                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[
-                            shared_edges_list[1]] == "Red"):
-                            continue
+                            if len(shared_edges_list) == 2:
+                                if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                                    print("current_winning_path: This is not a bridge pattern")
+                                    continue
 
-                        if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[
-                            shared_edges_list[1]] == "None"):
-                            fill_bp_index = choice(shared_edges_list)
-                            print(f"current_winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
-                            return fill_bp_index
+                            if (self.CellNodesFeatureList[shared_edges_list[0]] == "Red" or self.CellNodesFeatureList[
+                                shared_edges_list[1]] == "Red"):
+                                continue
+
+                            if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[
+                                shared_edges_list[1]] == "None"):
+                                fill_bp_index = choice(shared_edges_list)
+                                print(f"current_winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
+                                return fill_bp_index
+                            
+
+
+        else:
+
+            left_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index % self.board_size == 0]
+            right_wall_nodes = [index for index in range(len(self.CellNodesEdgeList)) if index % self.board_size == self.board_size - 1]
+ 
+
+            touching_left_wall = False
+            for node in self.Current_Winning_Path:
+                if node in left_wall_nodes:
+                    print(f"current_winning_path: left_wall_nodes: {left_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_left_wall = True
+
+            touching_right_wall = False
+            for node in self.Current_Winning_Path:
+                if node in right_wall_nodes:
+                    print(f"current_winning_path: right_wall_nodes: {right_wall_nodes} and for current path: {self.Current_Winning_Path} the node {node}")
+                    touching_right_wall = True
+
+
+            # Combined condition to check if the path touches both the top and bottom walls
+            if touching_left_wall is True and touching_right_wall is True:
+                print(f"current_winning_path {self.Current_Winning_Path} is touching both the right and left walls.")
+
+
+                # Confirm that the path is fully connected in a bridge pattern
+                fully_connected = True
+
+                for i in range(len(self.Current_Winning_Path)):
+                    for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
+                        node_a = self.Current_Winning_Path[i]
+                        node_b = self.Current_Winning_Path[j]
+
+                        # Find shared edges (bridge connections) between node_a and node_b
+                        neighbors_a = set(self.blue_edges_mapping[node_a])
+                        neighbors_b = set(self.blue_edges_mapping[node_b])
+                        shared_edges = neighbors_a.intersection(neighbors_b)
+                        shared_edges_list = list(shared_edges)
+
+                        print(f"current_winning_path: shared_edges_list: {shared_edges_list}")
+                        # If fully connected, then proceed to fill
+                        if fully_connected:
+
+                            if len(shared_edges_list) <= 1:
+                                continue
+
+                            if len(shared_edges_list) == 2:
+                                if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
+                                    print("current_winning_path: This is not a bridge pattern")
+                                    continue
+
+                            if (self.CellNodesFeatureList[shared_edges_list[0]] == "Blue" or self.CellNodesFeatureList[
+                                shared_edges_list[1]] == "Blue"):
+                                continue
+
+                            if (self.CellNodesFeatureList[shared_edges_list[0]] == "None" and self.CellNodesFeatureList[
+                                shared_edges_list[1]] == "None"):
+                                fill_bp_index = choice(shared_edges_list)
+                                print(f"current_winning_path: Filled edge {fill_bp_index} between nodes {node_a} and {node_b}.")
+                                return fill_bp_index
+                            
+
         return None
 
     def disrupted_paths(self):
