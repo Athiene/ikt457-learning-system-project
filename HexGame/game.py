@@ -285,7 +285,15 @@ class Game:
             if randomMoves:
                 self.Winner = self.makeMove(False, self.RandomAvailableCell())
             else:
-                bp = BP(playerColor=self.Player1, size=self.board_size, cell_node_feature_list=self.CellNodesFeatureList, cell_nodes_edge_list=self.CellNodesEdgeList, red_path=self.RedPaths, All_Edges=self.all_edges, move_list=self.MoveList, RedAI = False, BlueAI = True, red_bp=self.Red_Bp, current_winning_path=self.Current_Winning_Path, blue_path=self.BluePaths, blue_bp=self.Blue_Bp, enable_print= False)
+                blue_ai = True
+                red_ai = random.choice([True, False])
+
+                if red_ai:
+                    blue_ai = False
+                else:
+                    blue_ai = True
+
+                bp = BP(playerColor=self.Player1, size=self.board_size, cell_node_feature_list=self.CellNodesFeatureList, cell_nodes_edge_list=self.CellNodesEdgeList, red_path=self.RedPaths, All_Edges=self.all_edges, move_list=self.MoveList, RedAI = red_ai, BlueAI = blue_ai, red_bp=self.Red_Bp, current_winning_path=self.Current_Winning_Path, blue_path=self.BluePaths, blue_bp=self.Blue_Bp, enable_print= False)
                 move = bp.get_next_move()
                 if move is None:
                     # Fallback to a random move if no bridge move is available
