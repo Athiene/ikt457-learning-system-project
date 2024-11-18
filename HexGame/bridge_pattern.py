@@ -402,7 +402,7 @@ class BP:
             print("\ndetect_paths: Paths between blue nodes:")
 
 
-            for i, red_index in enumerate(blue_indexes):
+            for i, blue_index in enumerate(blue_indexes):
                 edges_for_index_i = set(self.blue_edges_mapping[blue_index])
                 print(f"\ndetect_paths: Current Position being evaluated: {blue_index} for bLUE")
                 print(f"detect_paths: Edges for blue index {blue_index}: {edges_for_index_i}")
