@@ -1,5 +1,5 @@
 import random
-from .bridge_pattern import BP
+from bridge_pattern import BP
 
 class Game:
 
@@ -8,6 +8,8 @@ class Game:
         self.board_size = size
         self.Player1 = True
         self.Winner = None
+        self.redAI = False
+        self.blueAI = False
 
         # Create an array containing arrays
         # A single array represents a cell in the hex game
@@ -25,6 +27,17 @@ class Game:
 
         # Array that contains a moves done
         self.MoveList = []
+
+        self.Red_Bp = []
+
+        self.Blue_Bp = []
+
+        self.RedPaths = []
+
+        self.BluePaths = []
+
+
+        self.Current_Winning_Path = []
 
         # Stores the maximum number of edges for each node
         self.maxEdgesPerNode = [0 for _ in range(self.board_size * self.board_size)]
@@ -218,10 +231,9 @@ class Game:
         print("Moves done")
         print(self.MoveList)
         print()
-        print("----")
+        print("______________________________________________________________________________\n")
 
 
-        self.print_hex_diagram()
 
     def RandomAvailableCell(self):
         # Create a list of all valid (x, y) coordinates where the cell is "None"
@@ -265,20 +277,27 @@ class Game:
         return
 
     def SimulateGame(self, goBack, randomMoves):
+        print("SimulateGame started")  # Debug print to confirm function call
         condition = True
+
         while condition:
-            if not randomMoves:
-                bp = BP(self.board_size, self.CellNodesFeatureList, self.CellNodesEdgeList, self.MoveList)
+            # Options: (1) Random moves (2) Strategy based moves
+            if randomMoves:
+                self.Winner = self.makeMove(True, self.RandomAvailableCell())
+            else:
+                bp = BP(playerColor=self.Player1, size=self.board_size, cell_node_feature_list=self.CellNodesFeatureList, cell_nodes_edge_list=self.CellNodesEdgeList, red_path=self.RedPaths, All_Edges=self.all_edges, move_list=self.MoveList, RedAI = True, BlueAI = False, red_bp=self.Red_Bp, current_winning_path=self.Current_Winning_Path, blue_path=self.BluePaths, blue_bp=self.Blue_Bp)
                 move = bp.get_next_move()
                 if move is None:
-                    self.Winner = self.makeMove(False, self.RandomAvailableCell())
+                    # Fallback to a random move if no bridge move is available
+                    self.Winner = self.makeMove(True, self.RandomAvailableCell())
                 else:
-                    self.Winner = self.makeMove(False, move)
-            if randomMoves:
-                self.Winner = self.makeMove(False, self.RandomAvailableCell())
+                    # Execute the selected bridge move
+                    self.Winner = self.makeMove(True, move)
+            # Checks Winner is not None to break out of loop
+            self.print_overview()
+
             if self.Winner is not None:
                 condition = False
-
-        #self.print_overview()
         self.returnTurns(goBack, False)
-        return self.Winner, self.CellNodesFeatureList
+        return self.Winner, self.CellNodesFeatureList, self.all_edges
+
