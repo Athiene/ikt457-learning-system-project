@@ -137,6 +137,7 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves, maxMoves
     blue_data = []  # List to collect "Blue" results
     existing_games = set()
     removed = 0
+    counting = 0 
 
     while len(red_data) < number or len(blue_data) < number:
         new_game = game.Game(gameboard_size)
@@ -148,8 +149,13 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves, maxMoves
         # Check if winner is Red or Blue
         if winner == "0" and len(red_data) < number:
             red_data.append((winner, feature))
+            counting += 1
         elif winner == "1" and len(blue_data) < number:
             blue_data.append((winner, feature))
+            counting += 1
+            
+        if maxMoves is not None: 
+            print(f"Genered {counting}/{(number*2)} games")
     return red_data + blue_data
 
 def createData(gameboard_size, csvName, number_of_examples, go_back, random_moves, maxMoves):
