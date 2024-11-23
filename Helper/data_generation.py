@@ -154,8 +154,9 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves, maxMoves
             blue_data.append((winner, feature))
             counting += 1
             
-        if maxMoves is not None: 
-            print(f"Genered {counting}/{(number*2)} games")
+        
+        print(f"Genered {counting}/{(number*2)} games")
+            
     return red_data + blue_data
 
 def createData(gameboard_size, csvName, number_of_examples, go_back, random_moves, maxMoves):

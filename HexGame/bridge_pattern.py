@@ -95,7 +95,7 @@ class BP:
         ################
         self.detect_paths()
         #RED: print(f"get_next_move_with_AI: Detected paths, current RedPaths: {self.RedPaths}")
-        self.conditional_print(f"get_next_move_with_AI: Detected paths, current BluePaths: {self.BluePaths}")
+        #self.conditional_print(f"get_next_move_with_AI: Detected paths, current BluePaths: {self.BluePaths}")
 
         #################################################
         # Check if disruption has occured previous move #
@@ -120,7 +120,7 @@ class BP:
         self.conditional_print(f"get_next_move_with_AI: path_disruption returned: {path_disruption}")
         if path_disruption is not None:
             #RED: print(f"get_next_move_with_AI: Path {self.RedPaths} has been disrupted at {path_disruption}")
-            self.conditional_print(f"get_next_move_with_AI: Path {self.BluePaths} has been disrupted at {path_disruption}")
+            self.conditional_print(f"get_next_move_with_AI: Path {self.Current_Winning_Path} has been disrupted at {path_disruption}")
             self.previous_disruption = True
             # Go back 4 moves in the next call if a disruption occurs
             return path_disruption
@@ -304,7 +304,7 @@ class BP:
         # Changes the cells to corresponding player color: Red or Blue
 
             
-        if self.Player1:
+        if self.redAI:
             # Get all red indexes from CellNodesFeatureList
             red_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Red"]
             self.conditional_print(f"detect_paths: All the red indexes in CellNodeFeatureList are at: {red_indexes}")
@@ -314,19 +314,21 @@ class BP:
                 red_edges = self.all_edges[red_index]
                 self.red_edges_mapping[red_index] = list(red_edges)
 
+            """
             # Prints out all the red indexes with their corresponding edges from the list red_edges_mapping
             self.conditional_print("\ndetect_paths: Red indexes with their edges:")
             for index, edges in enumerate(self.red_edges_mapping):
                 if edges:  # Only print non-empty entries for clarity
                     self.conditional_print(f"detect_paths: Index {index}: {edges}")
+            """
 
             # Check for paths between each pair of red nodes
             self.conditional_print("\ndetect_paths: Paths between red nodes:")
 
             for i, red_index in enumerate(red_indexes):
                 edges_for_index_i = set(self.red_edges_mapping[red_index])
-                self.conditional_print(f"\ndetect_paths: Current Position being evaluated: {red_index} for Red")
-                self.conditional_print(f"detect_paths: Edges for red index {red_index}: {edges_for_index_i}")
+                #self.conditional_print(f"\ndetect_paths: Current Position being evaluated: {red_index} for Red")
+                #self.conditional_print(f"detect_paths: Edges for red index {red_index}: {edges_for_index_i}")
 
                 # Compare with subsequent red indexes to check for paths
                 for j in range(i + 1, len(red_indexes)):
@@ -422,8 +424,8 @@ class BP:
 
 
 
-        else:
-            # Get all red indexes from CellNodesFeatureList
+        if self.blueAI:
+                        # Get all red indexes from CellNodesFeatureList
             blue_indexes = [index for index, value in enumerate(self.CellNodesFeatureList) if value == "Blue"]
             self.conditional_print(f"detect_paths: All the blue indexes in CellNodeFeatureList are at: {blue_indexes}")
 
@@ -446,7 +448,7 @@ class BP:
 
             for i, blue_index in enumerate(blue_indexes):
                 edges_for_index_i = set(self.blue_edges_mapping[blue_index])
-                self.conditional_print(f"\ndetect_paths: Current Position being evaluated: {blue_index} for bLUE")
+                self.conditional_print(f"\ndetect_paths: Current Position being evaluated for blue: {blue_index} for bLUE")
                 self.conditional_print(f"detect_paths: Edges for blue index {blue_index}: {edges_for_index_i}")
 
 
@@ -686,18 +688,21 @@ class BP:
         return None
 
     def disrupted_paths(self):
-        if self.Player1:
-            current_player_color = "Blue"
-        else:
+
+        if self.redAI:
             current_player_color = "Red"
+         
+        else:
+            current_player_color = "Blue"
 
 
-        if current_player_color == "Red":
+        if self.redAI:
             for i in range(len(self.Current_Winning_Path)):
+                node_a = self.Current_Winning_Path[i]
+
                 for j in range(i + 1, len(self.Current_Winning_Path)):  # Avoid duplicates by starting from i+1
                     self.conditional_print(f"disrupted_paths -> Current_Winning_Path: {self.Current_Winning_Path}")
 
-                    node_a = self.Current_Winning_Path[i]
                     node_b = self.Current_Winning_Path[j]
 
                     # Find shared edges (bridge connections) between node_a and node_b
@@ -721,13 +726,13 @@ class BP:
                     if len(shared_edges_list) == 2:
                         # If the first second in shared_edges_list is not an edge for first shared_edges_list index
                         if shared_edges_list[1] not in self.all_edges[shared_edges_list[0]]:
-                            self.conditional_print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
+                            #self.conditional_print("disrupted_paths: This is not a bridge pattern the disruption is happening at2")
                             continue
 
                     if len(shared_edges_list) == 2:
                         # If the first index in shared_edges_list is not an edge for second shared_edges_list index
                         if shared_edges_list[0] not in self.all_edges[shared_edges_list[1]]:
-                            self.conditional_print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
+                            #self.conditional_print("disrupted_paths: This is not a bridge pattern the disruption is happening at1")
                             continue
 
                     # Assuming `current_player_color` holds the current player's color (e.g., "Red" or "Blue")
@@ -744,7 +749,7 @@ class BP:
                     # Determine the outcome based on occupancy status
                     if occupied_by_self:
                         # Continue if any shared edge cell is occupied by the current player's piece
-                        self.conditional_print("disrupted_paths: One of the cells is occupied by the current player's piece.")
+                        #self.conditional_print("disrupted_paths: One of the cells is occupied by the current player's piece.")
                         continue
                     elif occupied_by_opponent is not None and unoccupied_index is not None:
                         # Return the unoccupied cell index if only one cell is occupied by the opponent
@@ -752,14 +757,14 @@ class BP:
                         return unoccupied_index
                     elif occupied_by_opponent is not None and unoccupied_index is None:
                         # If both cells are occupied (by opponent or otherwise), return None
-                        self.conditional_print("disrupted_paths: Both shared edge cells are occupied. Returning None.")
+                        #self.conditional_print("disrupted_paths: Both shared edge cells are occupied. Returning None.")
                         return None
                     else:
                         # No specific conditions met; return None as a default
-                        self.conditional_print("disrupted_paths: No conditions met. Returning None.")
+                        #self.conditional_print("disrupted_paths: No conditions met. Returning None.")
                         continue
 
-        if current_player_color == "Blue":
+        if self.blueAI:
 
             for i in range(len(self.Current_Winning_Path)):
 

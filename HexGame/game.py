@@ -8,9 +8,15 @@ class Game:
         self.board_size = size
         self.Player1 = True
         self.Winner = None
-        self.redAI = False
         self.blueAI = False
+        self.redAI = random.choice([True, False])
+        
+        if self.redAI:
+            self.blueAI = False
+        else:
+            self.blueAI = True
 
+        
         # Create an array containing arrays
         # A single array represents a cell in the hex game
         # This array of array represents the features of a cell
@@ -285,15 +291,9 @@ class Game:
             if randomMoves:
                 self.Winner = self.makeMove(False, self.RandomAvailableCell())
             else:
-                blue_ai = True
-                red_ai = random.choice([True, False])
+ 
 
-                if red_ai:
-                    blue_ai = False
-                else:
-                    blue_ai = True
-
-                bp = BP(playerColor=self.Player1, size=self.board_size, cell_node_feature_list=self.CellNodesFeatureList, cell_nodes_edge_list=self.CellNodesEdgeList, red_path=self.RedPaths, All_Edges=self.all_edges, move_list=self.MoveList, RedAI = red_ai, BlueAI = blue_ai, red_bp=self.Red_Bp, current_winning_path=self.Current_Winning_Path, blue_path=self.BluePaths, blue_bp=self.Blue_Bp, enable_print= False)
+                bp = BP(playerColor=self.Player1, size=self.board_size, cell_node_feature_list=self.CellNodesFeatureList, cell_nodes_edge_list=self.CellNodesEdgeList, red_path=self.RedPaths, All_Edges=self.all_edges, move_list=self.MoveList, RedAI = self.redAI, BlueAI = self.blueAI, red_bp=self.Red_Bp, current_winning_path=self.Current_Winning_Path, blue_path=self.BluePaths, blue_bp=self.Blue_Bp, enable_print= False)
                 move = bp.get_next_move()
                 if move is None:
                     # Fallback to a random move if no bridge move is available
