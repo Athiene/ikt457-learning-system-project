@@ -170,7 +170,7 @@ class Main:
         prediction_distribution_train = []
         prediction_distribution_test = []
 
-        with open(csvName+"epoch_log.txt", 'w') as epoch_log_file:
+        with open(csvName+"_epoch_log.txt", 'w') as epoch_log_file:
             start_training = time()
             for i in range(self.args.epochs):
                 start_training_epoch = time()
@@ -214,20 +214,27 @@ class Main:
                 test_count_0 = sum(1 for prediction in test_prediction if prediction == 0)
                 prediction_distribution_test.append((test_count_0, test_count_1))
             
+                # Write epoch details in log
+                epoch_log_file.write(f"Epoch#{i + 1}\n")
+                epoch_log_file.write(f"-- Accuracy train: {accuracy_train}\n")
+                epoch_log_file.write(f"0 VS 1 (Train): ({training_count_0}, {training_count_1})\n")
+                epoch_log_file.write(f"-- Accuracy test: {accuracy_test}\n")
+                epoch_log_file.write(f"0 VS 1 (Test): ({test_count_0}, {test_count_1})\n")
+                epoch_log_file.write(f"Training Time: {training_time}\n")
+                epoch_log_file.write(f"Testing Time: {testing_time}\n\n")
                 # Print epoch details
-                epoch_log_file.write(f"Epoch#{i + 1}")
-                epoch_log_file.write(f"-- Accuracy train: {accuracy_train}")
-                epoch_log_file.write(f"0 VS 1 (Train): ({training_count_0}, {training_count_1})")
-                epoch_log_file.write(f"-- Accuracy test: {accuracy_test}")
-                epoch_log_file.write(f"0 VS 1 (Test): ({test_count_0}, {test_count_1})")
-                epoch_log_file.write(f"Training Time: {training_time}")
-                epoch_log_file.write(f"Testing Time: {testing_time}")
-                epoch_log_file.write("")
+                print(f"Epoch#{i + 1}")
+                print(f"-- Accuracy train: {accuracy_train}")
+                print(f"0 VS 1 (Train): ({training_count_0}, {training_count_1})")
+                print(f"-- Accuracy test: {accuracy_test}")
+                print(f"0 VS 1 (Test): ({test_count_0}, {test_count_1})")
+                print(f"Training Time: {training_time}")
+                print(f"Testing Time: {testing_time}\n\n")
         
         stop_training = time()
         total_time = stop_training - start_training
-        with open(csvName+"summary_log.txt", 'w') as summary_log_file:
-            print(f"Total Training Time: {total_time}")
+        with open(csvName+"_summary_log.txt", 'w') as summary_log_file:
+            summary_log_file.write(f"Total Training Time: {total_time}\n")
             
             # Calculate and print averages
             avg_training_time = np.mean(time_training_epochs)
@@ -235,35 +242,47 @@ class Main:
             avg_accuracy_train = np.mean(accuracy_train_epochs)
             avg_accuracy_test = np.mean(accuracy_test_epochs)
             
-            summary_log_file.write("\nAverages:")
-            summary_log_file.write(f"Average Training Time per Epoch: {avg_training_time}")
-            summary_log_file.write(f"Average Testing Time per Epoch: {avg_testing_time}")
-            summary_log_file.write(f"Average Training Accuracy: {avg_accuracy_train}")
-            summary_log_file.write(f"Average Testing Accuracy: {avg_accuracy_test}")
+            summary_log_file.write("\nAverages:\n")
+            summary_log_file.write(f"Average Training Time per Epoch: {avg_training_time}\n")
+            summary_log_file.write(f"Average Testing Time per Epoch: {avg_testing_time}\n")
+            summary_log_file.write(f"Average Training Accuracy: {avg_accuracy_train}\n")
+            summary_log_file.write(f"Average Testing Accuracy: {avg_accuracy_test}\n")
             
             hs_accuracy_test = max(accuracy_test_epochs)
             hs_accuracy_train = max(accuracy_train_epochs)
             
-            summary_log_file.write("\nBest values:")
-            summary_log_file.write(f"Highest Testing Accuracy: {hs_accuracy_test}")
-            summary_log_file.write(f"Highest Training Accuracy: {hs_accuracy_train}")
+            summary_log_file.write("\nBest values:\n")
+            summary_log_file.write(f"Highest Testing Accuracy: {hs_accuracy_test}\n")
+            summary_log_file.write(f"Highest Training Accuracy: {hs_accuracy_train}\n")
         
-        with open(csvName+"parameters_log.txt", "w") as parameters_log_file:
-            parameters_log_file.write(Args)
+        with open(csvName+"_parameters_log.txt", "w") as parameters_log_file:
+            for key, value in vars(Args).items():
+                parameters_log_file.write(f"{key}={value}\n")
+
+
+
         
         weights = tm.get_state()[1].reshape(2, -1)
-        
-        for i in range(tm.number_of_clauses):
-            print("Clause #%d W:(%d %d)" % (i, weights[0, i], weights[1, i]), end=' ')
-            l = []
-            for k in range(self.rgs.hypervector_size * 2):
-                if tm.ta_action(0, i, k):
-                    if k < self.args.hypervector_size:
-                        l.append("x%d" % (k))
-                    else:
-                        l.append("NOT x%d" % (k - self.args.hypervector_size))
-            print(" AND ".join(l))
-            print(f"Number of literals: {len(l)}")
+
+        with open(csvName + "_clauses_log.txt", 'w') as clauses_log_file:
+            for i in range(tm.number_of_clauses):
+                # Write clause information
+                clauses_log_file.write("Clause #%d W:(%d %d) " % (i, weights[0, i], weights[1, i]))
+                
+                # Build the clause literals
+                l = []
+                for k in range(self.args.hypervector_size * 2):
+                    if tm.ta_action(0, i, k):
+                        if k < self.args.hypervector_size:
+                            l.append("x%d" % (k))
+                        else:
+                            l.append("NOT x%d" % (k - self.args.hypervector_size))
+                
+                # Write the literals joined by " AND "
+                clauses_log_file.write(" AND ".join(l))
+                
+                # Write the number of literals and an additional newline
+                clauses_log_file.write(f"\nNumber of literals: {len(l)}\n\n")
         
         plotting.double_plot(values_1=accuracy_train_epochs, 
                             values_2=accuracy_test_epochs, 
@@ -345,8 +364,6 @@ class Main:
                 simulations.append([winner, features])
         return simulations
     
-    def log_training_test(self, ):
-        return
     
 
 
