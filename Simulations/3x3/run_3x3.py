@@ -6,7 +6,10 @@ from Helper import main
 
 gameboard_size = 3
 Go_back = 0
-csvName = f"{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
+random_moves=False
+csvName = f"SM_{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
+if random_moves:
+    csvName = f"RM_{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()
