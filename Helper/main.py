@@ -115,7 +115,7 @@ class Main:
         for graph_id, simulation in enumerate(Simulation_Test):
             winner, featureList = simulation
             for node_id in range(len(self.edgeList)):
-                if edgeList[node_id]:
+                if self.edgeList[node_id]:
                     graphs_test.add_graph_node(graph_id, node_id, len(self.edgeList[node_id]))
         
         graphs_test.prepare_edge_configuration()
@@ -261,7 +261,7 @@ class Main:
                     if k < self.args.hypervector_size:
                         l.append("x%d" % (k))
                     else:
-                        l.append("NOT x%d" % (k - args.hypervector_size))
+                        l.append("NOT x%d" % (k - self.args.hypervector_size))
             print(" AND ".join(l))
             print(f"Number of literals: {len(l)}")
         
