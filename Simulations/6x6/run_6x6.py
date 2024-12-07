@@ -7,9 +7,13 @@ from Helper import main
 gameboard_size = 6
 Go_back = 0
 random_moves=False
+SML = True
+
 csvName = f"SM_{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
 if random_moves:
     csvName = f"RM_{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
+if SML:
+    csvName = f"SML_{gameboard_size}x{gameboard_size}_goBack{Go_back}_set"
 
 def default_args(**kwargs):
     parser = argparse.ArgumentParser()

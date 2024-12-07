@@ -12,11 +12,14 @@ Gameboard_size = 13
 Number_of_examples = 10000
 Go_back=0
 Random_moves = False
+MaxMoves=None
+
 CSV_name = f"SM_{Gameboard_size}x{Gameboard_size}_goBack{Go_back}_set"
 if Random_moves:
     CSV_name = f"RM_{Gameboard_size}x{Gameboard_size}_goBack{Go_back}_set"
-data_generation.createData(gameboard_size=Gameboard_size, csvName=CSV_name, number_of_examples=Number_of_examples, go_back=Go_back, random_moves=Random_moves, maxMoves=12)
-
+if MaxMoves is not None and Random_moves is False:
+    CSV_name = f"SML_{Gameboard_size}x{Gameboard_size}_goBack{Go_back}_set"
+data_generation.createData(gameboard_size=Gameboard_size, csvName=CSV_name, number_of_examples=Number_of_examples, go_back=Go_back, random_moves=Random_moves, maxMoves=MaxMoves)
     
 
 
