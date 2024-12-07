@@ -174,6 +174,9 @@ def fetch_simulation_games(number, gameboard_size, goBack, randomMoves, maxMoves
         if maxMoves is not None:
             if len(moveList) > maxMoves:
                 continue
+            if goBack > 0:
+                if len(moveList) > maxMoves-goBack:
+                    continue
         # Check if winner is Red or Blue
         if winner == "0" and len(red_data) < number:
             red_data.append((winner, feature))
